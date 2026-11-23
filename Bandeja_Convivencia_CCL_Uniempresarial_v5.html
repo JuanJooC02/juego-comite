@@ -1,0 +1,1462 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bandeja de Convivencia · CCL</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+/* Layout: portada y menús en columna; el juego ocupa toda la pantalla (celular o computador) con una cámara que sigue al personaje. El mundo tiene colores fijos; la interfaz sigue el tema claro u oscuro del dispositivo. */
+:root{
+  --azul:#223D8A; --rojo:#E80A0A; --ok:#166534; --mal:#B91C1C; --info:#2B4C7E;
+  --mesa:#F1F3F7; --papel:#FFFFFF; --tinta:#1E2536; --suave:#525D73; --linea:#DCE1EC;
+  --chip:#F3F5F9; --acento-txt:#223D8A; --ok-bg:#EAF5EE; --mal-bg:#FBECEC; --info-bg:#EDF2FA; --oro:#855D10; --oro-bg:#FAF4E4;
+  --hud:rgba(255,255,255,.82); --hud-tinta:#1E2536;
+  --sombra:0 1px 3px rgba(15,23,42,.05),0 4px 12px rgba(15,23,42,.04);
+  --f-disp:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-txt:"Inter",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --f-pix:"Pixelify Sans","JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --mesa:#111622; --papel:#1A2130; --tinta:#E6EAF2; --suave:#9AA5B8; --linea:#2A344A;
+  --chip:#222B3D; --acento-txt:#9BB2F0; --ok:#4ADE80; --mal:#F87171; --info:#93B4E8; --ok-bg:#142E22; --mal-bg:#331A20; --info-bg:#1E2A42; --oro:#E2BE62; --oro-bg:#2E2614;
+  --hud:rgba(20,26,38,.82); --hud-tinta:#E6EAF2; --sombra:0 1px 3px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --mesa:#111622; --papel:#1A2130; --tinta:#E6EAF2; --suave:#9AA5B8; --linea:#2A344A;
+  --chip:#222B3D; --acento-txt:#9BB2F0; --ok:#4ADE80; --mal:#F87171; --info:#93B4E8; --ok-bg:#142E22; --mal-bg:#331A20; --info-bg:#1E2A42; --oro:#E2BE62; --oro-bg:#2E2614;
+  --hud:rgba(20,26,38,.82); --hud-tinta:#E6EAF2; --sombra:0 1px 3px rgba(0,0,0,.3); color-scheme:dark}
+html,body{height:100%}
+body{background:var(--mesa);color:var(--tinta);font-family:var(--f-txt);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body.jugando{overflow:hidden;overscroll-behavior:none}
+body.jugando::before{background:#182030}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--mesa)}
+.app{max-width:620px;margin:0 auto;padding-block:12px 40px;display:flex;flex-direction:column;gap:12px}
+h1,h2,h3{font-family:var(--f-disp);margin:0;text-wrap:balance;letter-spacing:-.01em}
+button{font:inherit;cursor:pointer;color:inherit}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--acento-txt);outline-offset:2px}
+.btn{border:0;border-radius:10px;padding:11px 16px;min-height:40px;font-weight:600;font-size:15px;background:var(--azul);color:#fff;width:100%}
+.btn.sec{background:transparent;color:var(--acento-txt);border:1px solid var(--linea)}
+.btn.rojo{background:var(--rojo)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.marco{position:relative;background:var(--papel);border:1px solid var(--linea);border-radius:14px;box-shadow:var(--sombra);padding:16px;overflow:hidden}
+.marco::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(var(--azul) 72%,var(--rojo) 72%)}
+.eti{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--suave)}
+.nota{font-size:13px;color:var(--suave);margin:0}
+/* Portada · Diseño Tarjeta Dividida CCL */
+.portada{display:flex;flex-direction:column;gap:14px}
+.ccl-banner{position:relative;border-radius:18px;overflow:hidden;background:var(--papel);color:var(--tinta);box-shadow:var(--sombra);border:1px solid var(--linea)}
+.ccl-banner::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--azul) 72%,var(--rojo) 72%);z-index:2}
+.ccl-banner-grid{display:grid;grid-template-columns:1fr;gap:0}
+@media(min-width:540px){.ccl-banner-grid{grid-template-columns:1.12fr .88fr;align-items:stretch}}
+.ccl-banner-info{padding:16px 16px 15px;display:flex;flex-direction:column;justify-content:space-between;gap:12px}
+.ccl-banner-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ccl-banner-top img{width:88px;height:auto;background:#fff;border-radius:8px;padding:3px 5px;border:1px solid var(--linea)}
+.ccl-pill{font-family:var(--f-mono);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--acento-txt);background:var(--info-bg);border:1px solid var(--linea);padding:4px 9px;border-radius:999px;white-space:nowrap}
+.ccl-tit small{font-family:var(--f-mono);font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--rojo);display:block;margin-bottom:4px}
+.ccl-tit h1{font-family:var(--f-disp);font-size:clamp(23px,5.5vw,30px);font-weight:800;line-height:1.1;color:var(--tinta);margin:0 0 6px}
+.ccl-tit p{margin:0;font-size:13px;line-height:1.42;color:var(--suave)}
+.ccl-escena-wrap{position:relative;background:linear-gradient(160deg,#15244B 0%,#223D8A 100%);display:flex;flex-direction:column;justify-content:flex-end;min-height:195px;overflow:hidden}
+.ccl-escena-wrap canvas{width:100%;height:100%;object-fit:cover;display:block;image-rendering:pixelated}
+.ccl-escena-tag{position:absolute;bottom:8px;left:8px;right:8px;background:rgba(15,23,42,.82);backdrop-filter:blur(4px);color:#F8FAFC;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:5px 8px;font-size:11px;line-height:1.25;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.ccl-escena-tag b{font-family:var(--f-txt);font-weight:700;color:#93C5FD;display:block}
+.ccl-escena-tag span{font-family:var(--f-mono);font-size:10px;opacity:.85}
+.hero{position:relative;border-radius:16px;overflow:hidden;background:#1E2942;line-height:0;box-shadow:var(--sombra);border:1px solid var(--linea)}
+.hero canvas{width:100%;height:auto;display:block;image-rendering:pixelated}
+.logo{width:clamp(60px,17vw,110px);height:auto;background:#fff;border-radius:10px;padding:4px;position:absolute;top:8px;left:8px}
+.fila2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ccl-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ccl-stat{background:var(--papel);border:1px solid var(--linea);border-radius:12px;padding:10px 10px 9px;box-shadow:var(--sombra);display:flex;flex-direction:column;gap:4px}
+.ccl-stat span{font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--suave)}
+.ccl-stat b{font-family:var(--f-disp);font-size:19px;font-weight:800;color:var(--acento-txt);line-height:1}
+.prog{display:flex;gap:10px;align-items:center;font-size:13.5px}
+.barrita{height:5px;border-radius:8px;background:var(--linea);overflow:hidden;margin-top:2px}
+.barrita i{display:block;height:100%;background:linear-gradient(90deg,var(--azul),#3B82F6)}
+.ccl-dock{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ccl-dock button{border:1px solid var(--linea);background:var(--papel);border-radius:12px;padding:10px 8px;font-size:12.5px;font-weight:600;color:var(--tinta);box-shadow:var(--sombra);display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.ccl-dock button i{font-style:normal;font-family:var(--f-mono);font-size:11px;font-weight:700;color:var(--acento-txt);background:var(--chip);padding:2px 7px;border-radius:6px}
+.misiones{display:grid;grid-template-columns:1fr;gap:9px}
+@media(min-width:520px){.misiones{grid-template-columns:1fr 1fr}.misiones .mis:last-child:nth-child(odd){grid-column:1/-1}}
+.mis{display:flex;flex-direction:column;justify-content:space-between;gap:8px;text-align:left;border:1px solid var(--linea);border-top:3px solid var(--azul);background:var(--papel);border-radius:13px;padding:12px 13px;box-shadow:var(--sombra);transition:transform .12s,border-color .12s}
+.mis:hover{transform:translateY(-1px);border-color:var(--azul)}
+.mis.ok{border-top-color:var(--ok)}
+.mis-head{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%}
+.mis .n{font-family:var(--f-mono);font-weight:700;color:var(--acento-txt);background:var(--chip);border-radius:6px;padding:2px 7px;font-size:11px}
+.mis b{display:block;font-size:14.5px;line-height:1.25}
+.mis small{color:var(--suave);font-size:12px;display:block;margin-top:2px}
+.mis .st{font-family:var(--f-mono);font-size:11px;font-weight:700;color:var(--ok);background:var(--ok-bg);padding:2px 7px;border-radius:999px;white-space:nowrap}
+.mis .st.no{color:var(--suave);background:var(--chip);font-weight:600}
+/* Personaje */
+.estudio{display:grid;gap:12px}
+.preview{background:linear-gradient(#EFF2F8,#E4E9F2);border:1px solid var(--linea);border-radius:14px;display:flex;justify-content:center;gap:4px;padding:10px;line-height:0}
+.preview canvas{width:23%;max-width:110px;height:auto;image-rendering:pixelated}
+.opcion{display:grid;gap:6px}
+.opcion > span{font-weight:600;font-size:14px}
+.sw{display:flex;flex-wrap:wrap;gap:8px}
+.sw button{width:36px;height:36px;border-radius:10px;border:1.5px solid var(--linea)}
+.sw button.nada{background:repeating-linear-gradient(45deg,var(--papel) 0 5px,var(--linea) 5px 7px)}
+.sw button[aria-pressed="true"]{outline:2.5px solid var(--azul);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--linea);background:var(--papel);border-radius:999px;padding:6px 12px;min-height:34px;font-size:13.5px;font-weight:600}
+.chips button[aria-pressed="true"]{background:var(--azul);color:#fff;border-color:var(--azul)}
+.campo input{width:100%;box-sizing:border-box;border:1px solid var(--linea);background:var(--papel);color:var(--tinta);border-radius:10px;padding:10px 12px;font:inherit;font-size:16px}
+/* Juego a pantalla completa */
+.juego{position:fixed;inset:0;z-index:8;background:#182030;display:flex;flex-direction:column}
+.juego canvas.mundo{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:pointer;image-rendering:pixelated}
+.hud{position:absolute;z-index:2;left:0;right:0;display:flex;gap:6px;align-items:center;justify-content:space-between;pointer-events:none;
+  padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.hud.arriba{top:0;padding-top:calc(env(safe-area-inset-top,0px) + 6px)}
+.hud.abajo{bottom:0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);justify-content:center}
+.hud > *{pointer-events:auto}
+.chipo{background:var(--hud);color:var(--hud-tinta);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--linea);border-radius:10px;padding:4px 9px;box-shadow:0 1px 4px rgba(15,23,42,.12);font-size:12px;line-height:1.2;min-width:0}
+.chipo b{font-family:var(--f-pix);font-size:16px;display:block}
+.chipo.cap{flex:0 1 auto;max-width:min(62%,360px);overflow:hidden}
+.chipo.cap span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb{background:var(--hud);color:var(--hud-tinta);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--linea);border-radius:10px;padding:6px 8px;min-height:38px;box-shadow:0 1px 4px rgba(15,23,42,.14);font-weight:600;font-size:11.5px;display:grid;justify-items:center;align-content:center;gap:1px;min-width:52px}
+.hb i{font-style:normal;font-family:var(--f-pix);font-size:15px;line-height:1}
+.hb.prim{background:var(--azul);color:#fff;border-color:var(--azul)}
+.botonera{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;width:min(100%,500px)}
+.botonera .hb{min-width:0;padding:5px 2px;font-size:11px;min-height:44px}
+.aviso{position:absolute;z-index:2;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 58px);width:min(90%,400px);box-sizing:border-box;
+  background:rgba(24,32,48,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#F8FAFC;font-family:var(--f-txt);font-weight:500;font-size:12.5px;line-height:1.25;padding:5px 10px;border-radius:8px;pointer-events:none;border:1px solid rgba(255,255,255,.16);text-align:center}
+.aviso.arriba{bottom:auto;top:calc(env(safe-area-inset-top,0px) + 88px)}
+body.velo-abierto .hud,body.velo-abierto .hud > *,body.velo-abierto .aviso{opacity:0;pointer-events:none}
+.zoom{display:grid;gap:4px}
+.zoom .hb{min-width:40px;width:40px;height:40px;min-height:40px;padding:0;border-radius:8px;place-items:center}
+.zoom .hb i{font-size:15px}
+/* Hojas emergentes */
+.velo{position:fixed;inset:0;z-index:20;background:rgba(15,23,42,.45);display:flex;align-items:flex-end;justify-content:center;
+  padding:0 max(10px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(10px,env(safe-area-inset-left,0px))}
+.hoja{background:var(--papel);width:100%;max-width:600px;max-height:92vh;max-height:min(92%,calc(100dvh - 12px));overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;border-radius:16px 16px 0 0;border:1px solid var(--linea);box-shadow:0 -4px 20px rgba(15,23,42,.12);padding:14px 16px 18px;position:relative;box-sizing:border-box;display:flex;flex-direction:column;gap:8px}
+.hoja > *{flex-shrink:0}
+.hoja h2{font-size:19px;padding-right:72px;line-height:1.2}
+.cab-sala{display:flex;flex-direction:column;gap:2px;padding-right:72px}
+.cab-sala .eti{display:inline-flex;align-items:center;gap:6px}
+.cab-sala .eti i{width:8px;height:8px;border-radius:99px;display:inline-block}
+.cab-sala h2{padding-right:0}
+.cerrar{position:absolute;top:12px;right:12px}
+.mini{border:1px solid var(--linea);background:var(--chip);color:var(--tinta);border-radius:8px;padding:8px 14px;min-height:40px;font-weight:600;font-size:13px}
+.interior{width:100%;aspect-ratio:16/7;height:auto;border-radius:10px;border:1px solid var(--linea);image-rendering:pixelated;display:block;background:#EAECEF}
+.npc{display:flex;gap:10px;align-items:center}
+.npc canvas{flex:none;width:48px;height:48px;border-radius:10px;border:1px solid var(--linea);background:var(--chip);image-rendering:pixelated}
+.globo{background:var(--chip);border:1px solid var(--linea);border-radius:4px 12px 12px 12px;padding:8px 11px;font-size:13.5px;line-height:1.4;flex:1;min-width:0}
+.globo b.quien{display:block;font-family:var(--f-txt);font-weight:700;font-size:12.5px;color:var(--acento-txt);margin-bottom:2px}
+.dialogo .globo{font-size:14.5px}
+.dialogo canvas{width:72px;height:72px}
+.pedidos{display:grid;gap:6px}
+.ped{text-align:left;border:1px solid var(--linea);background:var(--papel);border-radius:10px;padding:9px 12px;min-height:40px;font-size:14px;font-weight:500;display:flex;justify-content:space-between;gap:10px;align-items:center;transition:border-color .15s,background .15s}
+.ped small{color:var(--acento-txt);background:var(--chip);border:1px solid var(--acento-txt);border-radius:6px;padding:2px 7px;font-family:var(--f-mono);font-size:10.5px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+.ped.hecho{border-color:var(--ok);background:var(--ok-bg)}
+.ped.hecho small{background:var(--papel);color:var(--ok);border-color:var(--ok)}
+.ped.accion{border-color:var(--info);background:var(--info-bg)}
+.ped.accion small{background:var(--papel);color:var(--acento-txt);border-color:var(--acento-txt)}
+.res{padding:9px 12px;border-radius:10px;font-size:13.5px;border:1px solid var(--linea)}
+.res.bien{background:var(--ok-bg);border-color:var(--ok)} .res.malo{background:var(--mal-bg);border-color:var(--mal)} .res.info{background:var(--info-bg);border-color:var(--linea)}
+.res b{display:block;margin-bottom:2px}
+.cita{display:block;margin-top:4px;font-family:var(--f-mono);font-size:11px;color:var(--suave)}
+.caso .cab{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.canal{font-family:var(--f-mono);font-size:11px;font-weight:600;background:var(--info-bg);color:var(--acento-txt);border-radius:999px;padding:3px 9px}
+.de{color:var(--suave);font-size:13px}
+.ficha{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;margin:0;font-size:13.5px}
+.ficha dt{color:var(--suave)} .ficha dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums;min-width:0}
+.carpeta{display:flex;flex-wrap:wrap;gap:6px}
+.carpeta span{font-size:12.5px;background:var(--ok-bg);border:1px solid var(--ok);border-radius:999px;padding:3px 9px}
+.carpeta em{font-size:13px;color:var(--suave)}
+.oficinas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.oficinas button{min-width:0;overflow-wrap:anywhere;border:1px solid var(--linea);background:var(--papel);border-radius:10px;padding:10px 8px;min-height:44px;font-size:13px;font-weight:600;line-height:1.2;display:grid;gap:6px;justify-items:start;text-align:left}
+.oficinas i{width:100%;height:5px;border-radius:3px}
+.docs{display:grid;gap:8px}
+.doc{border:1px solid var(--linea);border-radius:10px;padding:10px 12px;display:grid;gap:7px}
+.doc .n{font-weight:600} .doc .d{font-size:13px;color:var(--suave)}
+.doc .acc{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.doc .acc button{border:1px solid var(--linea);background:var(--papel);border-radius:8px;padding:8px;min-height:36px;font-weight:600;font-size:13.5px}
+.doc .acc button[aria-pressed="true"].si{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.doc .acc button[aria-pressed="true"].no{background:var(--mal-bg);border-color:var(--mal);color:var(--mal)}
+.doc.bien{border-color:var(--ok)} .doc.malo{border-color:var(--mal)}
+.formato{border:1px solid var(--linea);border-radius:10px;overflow:hidden}
+.formato .enc{display:grid;grid-template-columns:1fr auto;gap:6px;padding:10px 12px;background:var(--chip);font-size:13px}
+.formato .enc b{font-family:var(--f-disp);font-size:15px}
+.formato .enc span{font-family:var(--f-mono);font-size:11px;text-align:right;color:var(--suave)}
+.fila{display:grid;gap:4px;padding:10px 12px;border-top:1px solid var(--linea)}
+.fila .lab{font-size:11.5px;font-family:var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--suave)}
+.fila .q{font-size:13.5px;color:var(--suave)}
+.fila button.val{text-align:left;border:1px dashed var(--linea);background:var(--papel);border-radius:8px;padding:9px 10px;min-height:38px;font-size:14px}
+.fila button.val.lleno{border-style:solid;border-color:var(--info);background:var(--info-bg)}
+.fila.bien button.val{border-color:var(--ok);background:var(--ok-bg)}
+.fila.malo button.val{border-color:var(--mal);background:var(--mal-bg)}
+.tipos{display:grid;gap:8px}
+.tipo{text-align:left;border:1px solid var(--linea);background:var(--papel);border-radius:10px;padding:11px 12px;min-height:42px;display:grid;grid-template-columns:62px 1fr;gap:10px;align-items:center}
+.tipo b{font-family:var(--f-mono);color:var(--acento-txt);font-size:13px}
+.sello{align-self:flex-start;font-family:var(--f-mono);font-weight:700;font-size:22px;letter-spacing:.08em;padding:4px 12px;border:3px solid currentColor;border-radius:8px;transform:rotate(-5deg);margin:4px 0;animation:golpe .35s cubic-bezier(.2,1.6,.4,1)}
+.sello.ok{color:var(--ok)} .sello.mal{color:var(--mal)}
+@keyframes golpe{from{transform:rotate(-5deg) scale(2.2);opacity:0}to{transform:rotate(-5deg) scale(1);opacity:1}}
+.lista{list-style:none;padding:0;margin:0;display:grid;gap:7px;font-size:14px}
+.lista li{display:grid;grid-template-columns:20px 1fr;gap:8px}
+.lista .m{font-family:var(--f-mono);font-weight:700} .lista .m.ok{color:var(--ok)} .lista .m.no{color:var(--mal)}
+.pagina{background:var(--oro-bg);border:1px solid var(--oro);border-radius:12px;padding:12px;display:grid;gap:6px}
+.pagina .art{font-family:var(--f-pix);font-size:26px;font-weight:700;color:var(--oro);line-height:1}
+.pagina h3{font-size:17px}
+.album{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.carta{aspect-ratio:3/4;border-radius:10px;border:1px dashed var(--linea);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px;text-align:center;font-size:11px;line-height:1.15;color:var(--suave);background:var(--papel)}
+.carta b{font-family:var(--f-pix);font-size:18px;color:var(--suave)}
+.carta.ok{border:1px solid var(--oro);background:var(--oro-bg);color:var(--tinta)}
+.carta.ok b{color:var(--oro)}
+.manual h3{font-size:16px;margin:8px 0 2px}
+.manual table{width:100%;border-collapse:collapse;font-size:13px}
+.manual td{border-top:1px solid var(--linea);padding:6px 4px;vertical-align:top}
+.manual td:first-child{font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.manual ul{margin:0;padding-left:18px;font-size:14px}
+.rank{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px;counter-reset:r}
+.rank li{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border-radius:8px;background:var(--chip);font-size:14px;counter-increment:r}
+.rank li::before{content:counter(r);font-family:var(--f-mono);font-weight:700;color:var(--acento-txt)}
+.rank li.yo{outline:1.5px solid var(--azul)}
+.rank li span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank b{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.estrellas{font-size:18px;color:var(--oro);letter-spacing:2px}
+@media (max-width:380px){.oficinas{grid-template-columns:repeat(2,minmax(0,1fr))}.album{grid-template-columns:repeat(3,minmax(0,1fr))}.manual td:first-child{white-space:normal}.botonera .hb{font-size:10px;padding:4px 1px}}
+@media (min-width:900px){.hb{min-width:64px;font-size:12.5px}.chipo{font-size:13px}}
+.hoja{animation:sube .2s ease-out}
+@keyframes sube{from{transform:translateY(22px);opacity:.5}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.sello,.hoja{animation:none}}
+</style>
+
+<div class="app" id="app"></div>
+
+<script>
+(function(){
+"use strict";
+// Registro de participantes en la web: ruta de la función de Netlify (netlify/functions/registro.mjs) en el mismo sitio.
+const REGISTRO_URL=/^https?:$/.test(location.protocol)?"/api/registro":"";
+const LOGO="data:image/png;base64,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";
+const UE="data:image/png;base64,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";
+const imgUE=new Image(); imgUE.src=UE;
+const fmt=n=>"$"+n.toLocaleString("es-CO");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sinLig=t=>String(t).replace(/f(?=[il])/g,"f\u200C");
+const el=h=>{const d=document.createElement("div");d.innerHTML=h.trim();return d.firstElementChild};
+function barajar(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function guardar(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function leer(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function leerJSON(k,d){try{const v=JSON.parse(leer(k)||"null");return v==null?d:v}catch(e){return d}}
+function tono(hex,f){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;
+  if(f<0){r*=1+f;g*=1+f;b*=1+f}else{r+=(255-r)*f;g+=(255-g)*f;b+=(255-b)*f}
+  return "#"+[r,g,b].map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,"0")).join("")}
+
+/* ================= La sede (20 x 27 baldosas) ================= */
+const W=20,H=27,TS=16,K=3,TP=TS*K;
+const SALAS={
+ R:{n:"Alta Dirección · Rectoría",corto:"Alta Dirección",x:[1,8],y:[1,5],door:[4,6],spot:[4,5],npc:[4,2],desk:[[3,3],[4,3],[5,3]],col:"#9B5A5A",piso:"madera",tinte:"#EAE2D6",pared:"#F4EFE6"},
+ C:{n:"Presidencia CCL",corto:"Presidencia CCL",x:[11,18],y:[1,5],door:[14,6],spot:[14,5],npc:[14,2],desk:[[13,3],[14,3],[15,3]],col:"#9C7D46",piso:"madera",tinte:"#E6DEC8",pared:"#F2EDE2"},
+ F:{n:"Talento Humano y SST",corto:"Talento Humano y SST",x:[1,7],y:[10,14],door:[8,12],spot:[5,12],npc:[2,12],desk:[[3,12]],col:"#527D68",piso:"baldosa",tinte:"#E1EAE5",pared:"#ECF2EE"},
+ M:{n:"Sala de Sesiones CCL",corto:"Sesiones CCL",x:[12,18],y:[10,14],door:[11,12],spot:[14,12],npc:[16,12],desk:[[15,11],[15,12],[15,13]],col:"#A8704B",piso:"alfombra",tinte:"#EBE1D8",pared:"#F4EEE8"},
+ A:{n:"Sala de Escucha Individual",corto:"Escucha Individual",x:[1,7],y:[16,20],door:[8,18],spot:[5,18],npc:[2,18],desk:[[3,18]],col:"#746594",piso:"baldosa",tinte:"#E6E3EE",pared:"#F0EEF5"},
+ O:{n:"Sala de Diálogo y Acuerdos",corto:"Diálogo y Acuerdos",x:[12,18],y:[16,20],door:[11,18],spot:[14,18],npc:[17,18],desk:[[16,18]],col:"#5A6E7F",piso:"alfombra",tinte:"#DFE5EA",pared:"#ECEFF2"},
+ U:{n:"Su puesto · Miembro CCL",corto:"Su puesto",x:[1,7],y:[22,25],door:[8,23],spot:[5,23],npc:[2,23],desk:[[3,23]],col:"#967A50",piso:"madera",tinte:"#E8DFD1",pared:"#F3EFE8"},
+ P:{n:"Secretaría del Comité",corto:"Secretaría CCL",x:[12,18],y:[22,25],door:[11,23],spot:[14,23],npc:[17,23],desk:[[16,23]],col:"#4B807E",piso:"baldosa",tinte:"#DFECEB",pared:"#EBF3F2"}
+};
+const ORDEN_SALAS=["U","P","A","O","F","M","R","C"];
+const ROL={
+ U:"Miembro del Comité · CCL",
+ P:"Paola Montenegro · Secretaria CCL",
+ A:"Diana Melo · Rep. Trabajadores CCL",
+ O:"Claudia Velandia · Rep. Trabajadores CCL",
+ F:"Yazmín Lizarazo · Talento Humano y SST",
+ TH:"Tutor de Talento Humano · Talento Humano y SST",
+ M:"Comité de Convivencia Laboral (CCL)",
+ R:"Rector · Alta Dirección",
+ C:"Alexandra Neira · Presidenta CCL",
+ BS:"Beatriz Taborda · Presidenta Suplente CCL",
+ M1:"Diana Melo · Rep. Trabajadores CCL",
+ M2:"Andreina · Miembro CCL",
+ COL:"Colaborador · Solicitante"
+};
+const NOMBRE={
+ P:"Paola Montenegro",
+ A:"Diana Melo",
+ O:"Claudia Velandia",
+ F:"Yazmín Lizarazo",
+ TH:"Tutor de Talento Humano",
+ BS:"Beatriz Taborda",
+ R:"El Rector",
+ C:"Alexandra Neira",
+ M1:"Diana Melo",
+ M2:"Andreina",
+ M:"Pleno del Comité"
+};
+const LOOKS={
+ U:{piel:"#E8B88A",peloEst:"corto",peloCol:"#5A3825",camisa:"#223D8A",abajo:"pantalon",abajoCol:"#2F3A56",acc:"gafas",facial:"barba",corbata:""},
+ P:{piel:"#E8B88A",peloEst:"largo",peloCol:"#1B1B1B",camisa:"#1B1B1B",cuello:"#2B2B2B",abajo:"pantalon",abajoCol:"#1B1B1B",acc:"ninguno",facial:"ninguno",corbata:""},
+ COL:{piel:"#D9A577",peloEst:"corto",peloCol:"#5A3825",camisa:"#2E9C97",abajo:"pantalon",abajoCol:"#2F3A56",acc:"carne",facial:"ninguno",corbata:""},
+ A:{piel:"#F0C4A8",peloEst:"largo",peloCol:"#A0724A",camisa:"#223D8A",cuello:"#F4F6FA",abajo:"pantalon",abajoCol:"#1B1B1B",acc:"ninguno",facial:"ninguno",corbata:""},
+ O:{piel:"#F0C4A8",peloEst:"rizado",peloCol:"#1B1B1B",camisa:"#1B1B1B",cuello:"#F0B6C8",abajo:"pantalon",abajoCol:"#1B1B1B",acc:"ninguno",facial:"ninguno",corbata:""},
+ F:{piel:"#F0C4A8",peloEst:"largo",peloCol:"#3B2618",camisa:"#1B1B1B",cuello:"#D9EFE6",abajo:"pantalon",abajoCol:"#1B1B1B",acc:"ninguno",facial:"ninguno",corbata:""},
+ TH:{piel:"#D9A577",peloEst:"corto",peloCol:"#2A1B12",camisa:"#527D68",cuello:"#F4F6FA",abajo:"pantalon",abajoCol:"#2F3A56",acc:"carne",facial:"ninguno",corbata:""},
+ M:{piel:"#F0C4A8",peloEst:"largo",peloCol:"#A0724A",camisa:"#223D8A",cuello:"#F4F6FA",abajo:"pantalon",abajoCol:"#1B1B1B",acc:"ninguno",facial:"ninguno",corbata:""},
+ M1:{piel:"#F0C4A8",peloEst:"largo",peloCol:"#A0724A",camisa:"#223D8A",cuello:"#F4F6FA",abajo:"pantalon",abajoCol:"#1B1B1B",acc:"ninguno",facial:"ninguno",corbata:""},
+ M2:{piel:"#B97A4F",peloEst:"largo",peloCol:"#1B1B1B",camisa:"#1B1B1B",cuello:"#F4F6FA",abajo:"falda",abajoCol:"#1B1B1B",acc:"ninguno",facial:"ninguno",corbata:""},
+ BS:{piel:"#F0C4A8",peloEst:"rizado",peloCol:"#2A1B12",camisa:"#1B1B1B",cuello:"#F4D0DC",abajo:"pantalon",abajoCol:"#1B1B1B",acc:"ninguno",facial:"ninguno",corbata:""},
+ R:{piel:"#F0C4A8",peloEst:"entradas",peloCol:"#E6E6E6",camisa:"#4A4F57",abajo:"pantalon",abajoCol:"#3A3E46",acc:"gafas",facial:"bigote",corbata:"#8FB3D9"},
+ C:{piel:"#F6D3B3",peloEst:"largo",peloCol:"#D9B26A",camisa:"#1B1B1B",cuello:"#F4F6FA",abajo:"pantalon",abajoCol:"#1B1B1B",acc:"ninguno",facial:"ninguno",corbata:""}
+};
+const EXTRA_NPC=[
+ {t:[16,11],id:"M2",dir:"l"},
+ {t:[16,13],id:"BS",dir:"l"},
+ {t:[2,11],id:"TH",dir:"r"},
+ {t:[15,22],id:"COL",dir:"d"}
+];
+EXTRA_NPC.forEach(n=>{if(n.id)n.l=LOOKS[n.id]});
+const grid=[]; for(let y=0;y<H;y++)grid.push(new Array(W).fill("#"));
+function abrir(x0,x1,y0,y1,c){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)grid[y][x]=c}
+abrir(1,18,7,8,"."); abrir(9,10,9,26,".");
+for(const k in SALAS){const s=SALAS[k];abrir(s.x[0],s.x[1],s.y[0],s.y[1],k);grid[s.door[1]][s.door[0]]=k}
+const DECOR=[
+ ["estante",1,1],["estante",8,1],["sofa",1,4],["sofa",1,5],["planta",8,5],["cuadro",6,1],
+ ["planta",11,1],["estante",17,1],["archivador",18,1],["planta",11,5],["planta",18,5],
+ ["agua",1,7],["planta",18,7],["banca",5,8],["banca",14,8],
+ ["estante",1,10],["archivador",4,10],["planta",7,10],["estante",1,14],
+ ["planta",18,10],["planta",18,14],["pizarra",13,10],
+ ["estante",1,16],["planta",7,16],["archivador",1,20],
+ ["estante",18,16],["planta",12,16],["planta",18,20],
+ ["estante",1,22],["planta",7,25],["mesita",4,25],
+ ["sofa",12,25],["sofa",13,25],["planta",18,25],["planta",12,22]
+];
+const bloq=new Set();
+for(const k in SALAS){const s=SALAS[k];s.desk.forEach(p=>bloq.add(p+""));bloq.add(s.npc+"")}
+EXTRA_NPC.forEach(n=>bloq.add(n.t+"")); DECOR.forEach(d=>bloq.add([d[1],d[2]]+""));
+const pisable=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&grid[y][x]!=="#"&&!bloq.has([x,y]+"");
+function ruta(a,b){
+  if(!pisable(b[0],b[1]))return null;
+  const k=p=>p[0]+","+p[1],prev={},q=[a];prev[k(a)]=null;
+  while(q.length){const c=q.shift();if(c[0]===b[0]&&c[1]===b[1])break;
+    for(const d of [[1,0],[-1,0],[0,1],[0,-1]]){const n=[c[0]+d[0],c[1]+d[1]];if(pisable(n[0],n[1])&&!(k(n) in prev)){prev[k(n)]=c;q.push(n)}}}
+  if(!(k(b) in prev))return null;
+  const r=[];let c=b;while(c){r.unshift(c);c=prev[k(c)]}return r.slice(1);
+}
+
+/* ================= Retrato del Rector (pixel art, 24 x 29) ================= */
+const RECTOR_MITAD=["........kkkk","......kkhhhh",".....khhhhhh","....khhhhsss","....khhhssss","...khhHsssss","...khHssssss","...khSssHHHs","..khSggggggg","..krSgllelgs","..krSggggggs","...kSsssssSr","...kSssssMMm","...kSsssMmmm","....kSsssSoo",".....kSsssss","......kSSSss","......kwwSSs","...kkcccwwwt","..kccccCwwwt",".kcccccCcwwt",".kcccccCccwT","kccccccCccwt","kcccccccCcwt","kccccccccCwT","kcccccccccCt","kcccccccccct","kccccccccccc","kccccccccccc"];
+const RECTOR_PAL={k:"#2A2530",h:"#ECECEC",H:"#BDBDBD",s:"#F0C4A8",S:"#D9A58A",r:"#C98F74",g:"#8A8F99",l:"#DDE6EE",e:"#3A2E2A",m:"#F4F4F4",M:"#C8C8C8",o:"#A0655A",c:"#4A4F57",C:"#363A41",w:"#F4F6FA",t:"#8FB3D9",T:"#6C93BF"};
+function rectorPix(g,ox,oy,k,parpadeo){
+  RECTOR_MITAD.forEach((fila,y)=>{const r=fila+fila.split("").reverse().join("");
+    for(let x=0;x<24;x++){let c=r[x];if(c===".")continue;if(parpadeo&&c==="e")c="g";if(parpadeo&&c==="l"&&y===9)c="s";g.fillStyle=RECTOR_PAL[c];g.fillRect(ox+x*k,oy+y*k,k,k)}});
+  g.fillStyle="rgba(255,255,255,.7)";g.fillRect(ox+6*k,oy+9*k,k,k);g.fillRect(ox+14*k,oy+9*k,k,k);
+  g.fillStyle="rgba(255,255,255,.07)";for(let x=1;x<23;x+=3)g.fillRect(ox+x*k,oy+19*k,Math.max(1,k/3),10*k);
+}
+
+/* ================= Personajes en pixel art ================= */
+const OPC={
+ piel:["#F6D3B3","#F0C4A8","#E8B88A","#D9A577","#B97A4F","#8D5A3B","#5E3A24"],
+ peloEst:[["corto","Corto"],["largo","Largo"],["rizado","Rizado"],["mono","Moño"],["entradas","Entradas"],["rapado","Rapado"]],
+ peloCol:["#1B1B1B","#5A3825","#A0522D","#D9B26A","#9A9A9A","#E6E6E6","#C0392B","#3E5BA9"],
+ facial:[["ninguno","Ninguno"],["bigote","Bigote"],["barba","Barba"]],
+ camisa:["#223D8A","#E80A0A","#2E8B57","#8C6BC8","#E07A1F","#2E9C97","#4A4F57","#F2F2F2","#2B2B2B"],
+ corbata:["","#8FB3D9","#E80A0A","#223D8A","#7A1F1F","#2E8B57"],
+ abajo:[["pantalon","Pantalón"],["falda","Falda"]],
+ abajoCol:["#2F3A56","#3B3B4F","#4A4F57","#7A6A55","#1B1B1B","#5B7DB1"],
+ acc:[["ninguno","Ninguno"],["gafas","Gafas"],["carne","Carné"],["gafascarne","Gafas y carné"],["gorra","Gorra"]]
+};
+const LOOK_BASE={piel:"#D9A577",peloEst:"corto",peloCol:"#5A3825",camisa:"#223D8A",abajo:"pantalon",abajoCol:"#2F3A56",acc:"carne",facial:"ninguno",corbata:"",nombre:""};
+function personaje(g,ox,oy,L,dir,fr,k){
+  const side=dir==="l"||dir==="r", flip=dir==="l";
+  const p=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(ox+(flip?16-x-w:x)*k,oy+y*k,w*k,h*k)};
+  const O="#1a1830", piel=L.piel, sp=tono(piel,-.22), cam=L.camisa, cs=tono(cam,-.25), ab=L.abajoCol, pe=L.peloCol, ph=tono(pe,pe>"#c"?-.15:.18);
+  const la=fr===1?1:0, ra=fr===3?1:0;
+  g.fillStyle="rgba(0,0,0,.25)";g.beginPath();g.ellipse(ox+8*k,oy+15.4*k,5*k,1.5*k,0,0,7);g.fill();
+  const gafas=L.acc==="gafas"||L.acc==="gafascarne", carne=L.acc==="carne"||L.acc==="gafascarne", gorra=L.acc==="gorra", cor=L.corbata, fac=L.facial||"ninguno";
+  if(!side){
+    const fr2=dir==="d";
+    p(3,0,10,9,O);p(2,7,12,6,O);p(4,11,8,5,O);
+    if(L.abajo==="falda"){p(4,11,8,3,ab);p(4,13,8,1,tono(ab,-.2));p(5,14,2,1,piel);p(9,14,2,1,piel);p(5,15-la,3,1,"#2b2b2b");p(8,15-ra,3,1,"#2b2b2b")}
+    else{p(5,12,3,3-la,ab);p(8,12,3,3-ra,ab);p(5,15-la,3,1,"#2b2b2b");p(8,15-ra,3,1,"#2b2b2b")}
+    p(4,8,8,4,cam);p(4,11,8,1,cs);p(3,8,1,3,cs);p(12,8,1,3,cs);p(3,11,1,1,piel);p(12,11,1,1,piel);
+    if(fr2){ if(cor){p(6,8,4,1,L.cuello||"#F4F6FA");p(7,8,2,4,cor);p(7,8,2,1,tono(cor,.25))} else if(L.cuello){p(6,8,4,1,L.cuello);p(7,9,2,1,L.cuello)} else p(7,8,2,1,tono(cam,.25)) }
+    if(carne&&fr2){p(5,8,1,3,"#E80A0A");p(10,8,1,3,"#E80A0A");p(5,10,2,2,"#fff")}
+    p(4,1,8,7,piel);p(4,7,8,1,sp);
+    if(fr2){p(6,4,1,2,"#141414");p(9,4,1,2,"#141414");p(7,6,2,1,sp);p(5,5,1,1,tono(piel,.15));
+      if(fac==="bigote"){p(6,6,4,1,pe)} if(fac==="barba"){p(4,5,1,3,pe);p(11,5,1,3,pe);p(5,6,6,2,pe);p(7,6,2,1,tono(pe,-.3))}}
+    const e=L.peloEst;
+    if(dir==="u"){ if(e==="entradas"){p(4,2,8,5,pe);p(5,1,6,1,piel)} else if(e!=="rapado"){p(4,1,8,6,pe);p(5,1,4,1,ph)} else {p(4,1,8,2,pe)}
+      if(e==="largo"){p(3,2,10,8,pe)} if(e==="rizado"){p(3,0,10,6,pe)} if(e==="mono"){p(6,0,4,2,pe)} }
+    else{
+      if(e==="corto"){p(4,1,8,2,pe);p(4,3,1,2,pe);p(11,3,1,2,pe);p(5,1,3,1,ph)}
+      if(e==="largo"){p(4,1,8,2,pe);p(3,2,2,8,pe);p(11,2,2,8,pe);p(5,1,3,1,ph)}
+      if(e==="rizado"){p(3,0,10,3,pe);p(3,3,2,3,pe);p(11,3,2,3,pe);p(4,0,1,1,ph);p(7,0,2,1,ph);p(11,0,1,1,ph)}
+      if(e==="mono"){p(4,1,8,2,pe);p(4,3,1,2,pe);p(11,3,1,2,pe);p(6,0,4,1,pe);p(7,-1,2,1,pe)}
+      if(e==="entradas"){p(4,1,2,1,pe);p(10,1,2,1,pe);p(4,2,1,3,pe);p(11,2,1,3,pe);p(6,1,4,1,tono(piel,.1))}
+      if(e==="rapado"){p(4,1,8,1,pe)}
+      if(gafas&&fr2){p(5,4,6,1,"#3a3a3a");p(5,4,2,2,"#3a3a3a");p(9,4,2,2,"#3a3a3a");p(6,4,1,1,"#bfe3ff");p(9,4,1,1,"#bfe3ff")}
+    }
+    if(gorra){p(3,0,10,3,"#E80A0A");p(4,0,3,1,tono("#E80A0A",.3));if(fr2)p(4,3,8,1,tono("#E80A0A",-.3))}
+  } else {
+    p(4,0,9,9,O);p(4,7,8,6,O);p(5,11,6,5,O);
+    const sw=fr===1?-1:fr===3?1:0;
+    if(L.abajo==="falda"){p(5,11,6,3,ab);p(6,14,2,1,piel);p(8,14,2,1,piel);p(6+sw,15,3,1,"#2b2b2b")}
+    else{p(6+sw,12,2,3,ab);p(8-sw,12,2,3,tono(ab,-.15));p(6+sw,15,3,1,"#2b2b2b");p(8-sw,15,3,1,"#2b2b2b")}
+    p(5,8,6,4,cam);p(5,11,6,1,cs);
+    if(cor){p(9,8,2,1,"#F4F6FA");p(10,8,1,3,cor)}
+    p(7+sw,9,2,3,cs);p(7+sw,12,2,1,piel);
+    if(carne){p(10,8,1,3,"#E80A0A");p(10,10,1,2,"#fff")}
+    p(5,1,7,7,piel);p(5,7,7,1,sp);p(10,4,1,2,"#141414");p(11,6,1,1,sp);p(12,4,1,2,piel);
+    if(fac==="bigote")p(10,6,3,1,pe); if(fac==="barba"){p(7,5,5,3,pe);p(11,6,1,1,tono(pe,-.3))}
+    const e=L.peloEst;
+    if(e==="corto"){p(5,1,7,2,pe);p(5,3,3,3,pe);p(6,1,3,1,ph)}
+    if(e==="largo"){p(5,1,7,2,pe);p(4,2,4,8,pe);p(6,1,3,1,ph)}
+    if(e==="rizado"){p(4,0,8,3,pe);p(4,3,4,4,pe);p(6,0,2,1,ph)}
+    if(e==="mono"){p(5,1,7,2,pe);p(5,3,3,3,pe);p(3,1,2,3,pe)}
+    if(e==="entradas"){p(5,2,3,4,pe);p(5,1,2,1,pe)}
+    if(e==="rapado"){p(5,1,7,1,pe);p(5,2,2,2,pe)}
+    if(gafas){p(9,4,4,1,"#3a3a3a");p(10,4,2,2,"#3a3a3a");p(10,4,1,1,"#bfe3ff")}
+    if(gorra){p(5,0,7,3,"#E80A0A");p(11,3,3,1,tono("#E80A0A",-.3))}
+  }
+}
+
+/* ================= Bustos detallados (26 x 30) ================= */
+const cacheBusto={};
+function busto(g,ox,oy,L,k){
+  const clave=JSON.stringify(L);let c=cacheBusto[clave];
+  if(!c){c=document.createElement("canvas");c.width=26;c.height=30;const b=c.getContext("2d");
+    const P=(x,y,w,h,col)=>{b.fillStyle=col;b.fillRect(x,y,w,h)};
+    const sk=L.piel,ss=tono(sk,-.18),pe=L.peloCol,ph=tono(pe,pe>"#c"?-.18:.2),cam=L.camisa,cs=tono(cam,-.28),cu=L.cuello||(L.corbata?"#F4F6FA":tono(cam,.3)),e=L.peloEst;
+    if(e==="largo")P(4,7,18,17,tono(pe,-.12));
+    P(4,21,18,3,cam);P(2,23,22,7,cam);P(1,26,24,4,cam);
+    P(10,20,6,4,cu);P(11,24,4,3,cu);P(8,20,3,8,cs);P(15,20,3,8,cs);P(9,21,1,6,tono(cam,.12));P(16,21,1,6,tono(cam,.12));
+    if(L.corbata){P(12,21,2,8,L.corbata);P(12,21,2,1,tono(L.corbata,.3));P(12,28,2,1,tono(L.corbata,-.3))}
+    if(L.acc==="carne"||L.acc==="gafascarne"){P(6,22,1,4,"#E80A0A");P(5,26,3,3,"#fff")}
+    P(10,16,6,5,ss);
+    P(5,9,2,4,sk);P(19,9,2,4,sk);P(5,10,1,2,ss);P(20,10,1,2,ss);
+    P(7,4,12,13,sk);P(6,6,14,9,sk);P(8,17,10,1,sk);P(9,18,8,1,ss);P(6,13,1,2,ss);P(19,13,1,2,ss);
+    P(8,13,2,1,tono(sk,-.06));P(16,13,2,1,tono(sk,-.06));
+    if(e==="corto"){P(6,2,14,4,pe);P(5,4,2,6,pe);P(19,4,2,6,pe);P(8,2,6,1,ph);P(7,6,4,1,pe)}
+    if(e==="largo"){P(6,2,14,4,pe);P(4,4,3,19,pe);P(19,4,3,19,pe);P(6,5,5,2,pe);P(8,2,5,1,ph);P(4,8,1,10,ph)}
+    if(e==="rizado"){P(5,1,16,5,pe);P(4,3,3,10,pe);P(19,3,3,10,pe);P(6,0,3,1,pe);P(11,0,4,1,pe);P(17,0,2,1,pe);P(7,1,2,1,ph);P(13,1,2,1,ph)}
+    if(e==="mono"){P(6,2,14,4,pe);P(5,4,2,6,pe);P(19,4,2,6,pe);P(10,0,6,3,pe);P(11,0,3,1,ph)}
+    if(e==="entradas"){P(5,5,2,7,pe);P(19,5,2,7,pe);P(7,3,3,2,pe);P(16,3,3,2,pe);P(10,3,6,1,tono(sk,.12))}
+    if(e==="rapado"){P(6,3,14,2,pe);P(5,5,1,4,pe);P(20,5,1,4,pe)}
+    const ceja=e==="entradas"||pe>"#c"?tono(pe,-.35):tono(pe,-.1);P(8,8,3,1,ceja);P(15,8,3,1,ceja);
+    P(9,10,2,2,"#2a2228");P(15,10,2,2,"#2a2228");P(9,10,1,1,"#ffffff");P(15,10,1,1,"#ffffff");
+    P(12,11,2,3,ss);P(12,13,1,1,tono(sk,-.3));
+    P(11,15,4,1,"#A0655A");P(10,14,1,1,tono(sk,-.25));P(15,14,1,1,tono(sk,-.25));
+    if(L.facial==="bigote"){P(10,14,6,1,pe);P(11,13,4,1,pe)}
+    if(L.facial==="barba"){P(6,12,2,5,pe);P(18,12,2,5,pe);P(7,16,12,2,pe);P(8,18,10,1,pe);P(10,14,6,1,pe);P(11,15,4,1,"#7A4A40")}
+    if(L.acc==="gafas"||L.acc==="gafascarne"){const fr="#3a3a3a";[[8],[14]].forEach(([x])=>{P(x,9,4,1,fr);P(x,12,4,1,fr);P(x,9,1,4,fr);P(x+3,9,1,4,fr)});P(12,10,2,1,fr);P(6,10,2,1,fr);P(18,10,2,1,fr);P(10,10,1,1,"rgba(255,255,255,.55)");P(16,10,1,1,"rgba(255,255,255,.55)")}
+    if(L.acc==="gorra"){P(5,1,16,4,"#E80A0A");P(6,1,5,1,tono("#E80A0A",.3));P(4,5,18,1,tono("#E80A0A",-.35))}
+    const d=b.getImageData(0,0,26,30),a=d.data,o=new Uint8ClampedArray(a);
+    for(let y=0;y<30;y++)for(let x=0;x<26;x++){const i=(y*26+x)*4;if(a[i+3])continue;
+      const n=[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>{const X=x+dx,Y=y+dy;return X>=0&&Y>=0&&X<26&&Y<30&&a[(Y*26+X)*4+3]>0});
+      if(n){o[i]=26;o[i+1]=24;o[i+2]=40;o[i+3]=255}}
+    b.putImageData(new ImageData(o,26,30),0,0);cacheBusto[clave]=c}
+  g.imageSmoothingEnabled=false;g.drawImage(c,ox,oy,26*k,30*k);
+}
+function retratoHTML(id){return `<canvas width="96" height="96" data-retrato="${id}" aria-hidden="true"></canvas>`}
+function pintarRetratos(root){
+  root.querySelectorAll("canvas[data-retrato]").forEach(c=>{const g=c.getContext("2d");g.imageSmoothingEnabled=false;g.clearRect(0,0,96,96);
+    const id=c.dataset.retrato;
+    if(id==="R"){rectorPix(g,0,2,4,false);return}
+    const L=id==="yo"?S.look:LOOKS[id];busto(g,9,3,L,3)});
+}
+
+/* ================= Escenario pre-renderizado ================= */
+let fondo=null;
+function pintarFondo(){
+  fondo=document.createElement("canvas");fondo.width=W*TP;fondo.height=H*TP;
+  const g=fondo.getContext("2d");g.imageSmoothingEnabled=false;
+  const P=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x*K,y*K,w*K,h*K)};
+  for(let ty=0;ty<H;ty++)for(let tx=0;tx<W;tx++){
+    const X=tx*TS,Y=ty*TS,c=grid[ty][tx];
+    if(c==="#"){
+      P(X,Y,TS,TS,"#525D73");P(X,Y,TS,3,"#68748C");P(X,Y+3,TS,1,"#434D61");
+      if(ty+1<H&&grid[ty+1][tx]!=="#"){const s=SALAS[grid[ty+1][tx]];const fr=s?s.pared:"#E5E8EF";
+        P(X,Y+6,TS,10,fr);P(X,Y+6,TS,1,tono(fr,-.14));P(X,Y+15,TS,1,tono(fr,-.24));for(let i=0;i<TS;i+=8)P(X+i,Y+7,1,8,tono(fr,-.06))}
+      continue;
+    }
+    if(c==="."){P(X,Y,TS,TS,(tx+ty)%2?"#ECEEF2":"#E5E8EE");P(X,Y,TS,1,"#D8DCE6");P(X,Y,1,TS,"#D8DCE6");P(X+2,Y+2,2,1,"#F5F7FA");continue}
+    const s=SALAS[c];
+    if(s.piso==="madera"){const b=s.tinte;for(let i=0;i<4;i++){P(X,Y+i*4,TS,4,tono(b,((tx*3+ty*5+i)%3-1)*.04));P(X,Y+i*4+3,TS,1,tono(b,-.11));P(X+((tx*7+i*5)%TS),Y+i*4,1,3,tono(b,-.08))}}
+    else if(s.piso==="alfombra"){P(X,Y,TS,TS,s.tinte);for(let i=0;i<TS;i+=4)for(let j=(i/4)%2*2;j<TS;j+=4)P(X+j,Y+i,1,1,tono(s.tinte,-.06))}
+    else{for(let i=0;i<2;i++)for(let j=0;j<2;j++)P(X+j*8,Y+i*8,8,8,(i+j)%2?s.tinte:tono(s.tinte,-.04));P(X,Y,TS,1,tono(s.tinte,-.09));P(X,Y,1,TS,tono(s.tinte,-.09))}
+  }
+  for(let ty=0;ty<H;ty++)for(let tx=0;tx<W;tx++){
+    if(grid[ty][tx]!=="#")continue;const X=tx*TS,Y=ty*TS;
+    if(ty===0&&tx%2===1&&grid[1][tx]!=="#"){P(X+3,Y+6,10,9,"#F7F8FA");P(X+4,Y+7,8,7,"#B8D4E8");P(X+4,Y+7,3,2,"#E4F0F8");P(X+8,Y+7,1,7,"#F7F8FA")}
+    if((tx===0||tx===W-1)&&ty%3===1&&grid[ty][tx===0?1:W-2]!=="#"){P(X+4,Y+2,8,11,"#F7F8FA");P(X+5,Y+3,6,9,"#B8D4E8");P(X+5,Y+3,2,3,"#E4F0F8")}
+  }
+  for(const k in SALAS){const s=SALAS[k],[dx,dy]=s.door,X=dx*TS,Y=dy*TS;P(X+2,Y+2,12,12,s.col);P(X+3,Y+3,10,10,tono(s.col,.18));P(X+2,Y+2,12,1,tono(s.col,-.25))}
+  P(9*TS,26*TS+10,2*TS,6,"#E80A0A");P(9*TS+4,26*TS+2,2*TS-8,8,"#9AA6C4");
+  {const cx=10*TS,cy=8*TS;g.fillStyle="#D5DCE8";g.beginPath();g.ellipse(cx*K,cy*K,15*K,12*K,0,0,7);g.fill();g.fillStyle="#F7F8FA";g.beginPath();g.ellipse(cx*K,cy*K,13*K,10*K,0,0,7);g.fill();
+   if(imgUE.complete&&imgUE.naturalWidth){const w=20*K,h=w*0.84;g.drawImage(imgUE,cx*K-w/2,cy*K-h/2,w,h)}}
+  {
+    const SH=a=>`rgba(18,24,38,${a})`;
+    for(let ty=0;ty<H;ty++)for(let tx=0;tx<W;tx++){
+      if(grid[ty][tx]==="#")continue;
+      const X=tx*TS,Y=ty*TS,arr=ty>0&&grid[ty-1][tx]==="#",izq=tx>0&&grid[ty][tx-1]==="#";
+      if(arr){P(X,Y,TS,2,SH(.18));P(X,Y+2,TS,2,SH(.10));P(X,Y+4,TS,1,SH(.05))}
+      if(izq){const y0=arr?5:0;P(X,Y+y0,2,TS-y0,SH(.14));P(X+2,Y+y0,1,TS-y0,SH(.06))}
+    }
+    for(const k in SALAS){const d=SALAS[k].desk,xs=d.map(a=>a[0]),ys=d.map(a=>a[1]);
+      const x0=Math.min(...xs)*TS,x1=(Math.max(...xs)+1)*TS,y0=Math.min(...ys)*TS,y1=(Math.max(...ys)+1)*TS;
+      P(x0+3,y0+7,x1-x0,y1-y0-7,SH(.16))}
+    DECOR.forEach(([t,tx,ty])=>{const X=tx*TS,Y=ty*TS,libre=grid[ty][tx+1]!=="#",c=SH(.15);
+      if(t==="planta"){g.fillStyle=c;g.beginPath();g.ellipse((X+11)*K,(Y+14.5)*K,5*K,1.8*K,0,0,7);g.fill()}
+      else if(t==="estante"||t==="archivador"){if(libre)P(X+(t==="estante"?15:14),Y+3,3,13,c)}
+      else if(t==="agua"){if(libre)P(X+12,Y+8,3,8,c)}
+      else if(t==="sofa"){P(X+2,Y+14,TS,2,c);if(libre)P(X+16,Y+5,2,9,c)}
+      else if(t==="banca"){P(X+3,Y+12,TS-1,4,c)}
+      else if(t==="mesita"){P(X+5,Y+12,10,3,c)}
+      else if(t==="pizarra"){P(X+3,Y+12,13,2,c)}});
+  }
+  for(const k in SALAS){const s=SALAS[k];
+    if(s.desk.length>1){s.desk.forEach((t,i)=>{const X=t[0]*TS,Y=t[1]*TS;P(X,Y+3,TS,11,"#8C735B");P(X,Y+2,TS,10,k==="R"?"#9E8268":"#B0967A");P(X,Y+2,TS,2,k==="R"?"#B59B82":"#C4AD93");
+      if(k==="R"&&i===1){P(X+4,Y+4,8,5,"#F7F8FA");P(X+5,Y+5,6,1,"#9AA3B5");P(X+5,Y+7,4,1,"#9AA3B5")}
+      if(k==="R"&&i===0){P(X+6,Y,5,6,"#2B3242");P(X+7,Y+1,3,4,"#7BAFD4")}
+      if(k!=="R"&&i%2===0)P(X+5,Y+5,6,4,"#F7F8FA")})}
+    else{const [tx,ty]=s.desk[0],X=tx*TS,Y=ty*TS;P(X+1,Y+4,14,10,"#8C735B");P(X+1,Y+3,14,9,"#B0967A");P(X+1,Y+3,14,2,"#C4AD93");P(X+2,Y+13,2,3,"#735C46");P(X+12,Y+13,2,3,"#735C46");
+      if(k==="P"){P(X+4,Y+5,8,5,"#EFECE4");P(X+5,Y+6,6,1,"#9AA3B5");P(X+5,Y+8,4,1,"#9AA3B5")}
+      else{P(X+5,Y,7,6,"#2B3242");P(X+6,Y+1,5,4,"#7BAFD4");P(X+6,Y+1,2,1,"#CFE4F5");P(X+8,Y+6,1,1,"#2B3242");P(X+3,Y+8,4,2,"#F7F8FA");P(X+10,Y+7,3,3,"#EFECE4")}}
+  }
+  DECOR.forEach(([t,tx,ty])=>{const X=tx*TS,Y=ty*TS;
+    if(t==="planta"){P(X+5,Y+10,6,5,"#A66A53");P(X+5,Y+10,6,1,"#BD826B");g.fillStyle="#527D68";[[8,6,5],[5,7,3],[11,7,3],[8,3,3]].forEach(([a,b,r])=>{g.beginPath();g.arc((X+a)*K,(Y+b)*K,r*K,0,7);g.fill()});P(X+7,Y+4,2,2,"#6E9983")}
+    if(t==="estante"){P(X+1,Y+1,14,15,"#8C735B");P(X+2,Y+2,12,13,"#A3886D");[2,7,12].forEach(r=>{P(X+2,Y+r+4,12,1,"#78614B");const cs=["#5E7294","#9B6B6B","#6A8778","#B8A586","#D8DCE6"];for(let i=0;i<5;i++)P(X+3+i*2+(r%3),Y+r,2,4,cs[(i+r)%5])})}
+    if(t==="archivador"){P(X+2,Y+1,12,15,"#949CA8");P(X+3,Y+2,10,4,"#B2B9C4");P(X+3,Y+7,10,4,"#B2B9C4");P(X+3,Y+12,10,3,"#B2B9C4");[4,9,13].forEach(r=>P(X+7,Y+r,2,1,"#5A6270"))}
+    if(t==="sofa"){const col=tx<9?"#8C5E5E":"#567D7B";P(X,Y+3,TS,12,tono(col,-.22));P(X+1,Y+5,TS-2,8,col);P(X,Y+3,TS,2,tono(col,.18))}
+    if(t==="agua"){P(X+4,Y+6,8,10,"#DCE1E8");P(X+5,Y,6,7,"#9BC4DE");P(X+6,Y+1,2,4,"#D8EAF5");P(X+7,Y+9,2,2,"#4A6E9C")}
+    if(t==="banca"){P(X+1,Y+6,14,5,"#A3886D");P(X+1,Y+6,14,1,"#BCA288");P(X+2,Y+11,2,4,"#735C46");P(X+12,Y+11,2,4,"#735C46")}
+    if(t==="cuadro"){P(X+2,Y+2,12,10,"#B89F72");P(X+3,Y+3,10,8,"#F7F8FA");if(imgUE.complete&&imgUE.naturalWidth)g.drawImage(imgUE,(X+4)*K,(Y+3.5)*K,8*K,7*K)}
+    if(t==="pizarra"){P(X+1,Y+2,14,10,"#F0F2F6");P(X+1,Y+2,14,1,"#A3ACB8");P(X+3,Y+5,8,1,"#4A6294");P(X+3,Y+8,5,1,"#9B5A5A");P(X+10,Y+7,3,3,"#527D68")}
+    if(t==="mesita"){P(X+3,Y+6,10,7,"#A3886D");P(X+3,Y+6,10,2,"#BCA288");P(X+6,Y+3,4,4,"#F7F8FA")}
+  });
+  [[9,4],[11,4],[14,11],[14,13],[17,11],[17,13]].forEach(([tx,ty])=>{if(bloq.has([tx,ty]+""))return;const X=tx*TS,Y=ty*TS;P(X+4,Y+5,8,7,"#5A6275");P(X+4,Y+5,8,2,"#727B8F")});
+  for(let tx=1;tx<W;tx+=2){
+    if(grid[0][tx]!=="#"||grid[1][tx]==="#")continue;
+    const s=SALAS[grid[1][tx]];if(!s)continue;const X=tx*TS,Y0=TS*K,Y1=(TS+58)*K;
+    g.save();g.beginPath();g.rect(s.x[0]*TP,s.y[0]*TP,(s.x[1]-s.x[0]+1)*TP,(s.y[1]-s.y[0]+1)*TP);g.clip();
+    const gr=g.createLinearGradient(0,Y0,0,Y1);
+    gr.addColorStop(0,"rgba(255,248,220,.22)");gr.addColorStop(.6,"rgba(255,248,220,.07)");gr.addColorStop(1,"rgba(255,248,220,0)");
+    g.fillStyle=gr;
+    g.beginPath();g.moveTo((X+4)*K,Y0);g.lineTo((X+12)*K,Y0);g.lineTo((X+40)*K,Y1);g.lineTo((X+16)*K,Y1);g.closePath();g.fill();
+    g.beginPath();g.moveTo((X+6)*K,Y0);g.lineTo((X+10)*K,Y0);g.lineTo((X+30)*K,Y1);g.lineTo((X+20)*K,Y1);g.closePath();g.fill();
+    g.restore();
+  }
+  g.textBaseline="middle";
+  for(const k in SALAS){const s=SALAS[k];const ancho=(s.x[1]-s.x[0]+1)*TP,pad=TP*.35,maxW=ancho-8;
+    g.font=`700 ${Math.round(TP*.32)}px "Pixelify Sans", "JetBrains Mono", monospace`;
+    let txt=sinLig(s.n);if(g.measureText(txt).width+pad>maxW)txt=sinLig(s.corto);
+    const mw=g.measureText(txt).width,tw=Math.min(mw+pad,maxW),cabe=mw+pad<=maxW;
+    const x=Math.round(s.x[0]*TP+(ancho-tw)/2),y=(s.y[1]+1)*TP-TP*.46-3;
+    g.fillStyle="rgba(24,32,48,.82)";g.fillRect(x,y,tw,TP*.46);g.fillStyle=s.col;g.fillRect(x,y,TP*.1,TP*.46);
+    g.fillStyle="#F8FAFC";g.save();g.beginPath();g.rect(x+TP*.1,y,tw-TP*.1,TP*.46);g.clip();
+    g.textAlign=cabe?"center":"left";g.fillText(txt,cabe?x+TP*.05+tw/2:x+TP*.17,y+TP*.24);g.restore()}
+  g.textAlign="left";
+}
+
+/* ================= Interiores de las oficinas (16:7) ================= */
+function pintarInterior(c,k){
+  const g=c.getContext("2d");g.imageSmoothingEnabled=false;const s=SALAS[k],u=c.width/160;
+  const P=(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect(Math.round(x*u),Math.round(y*u),Math.ceil(w*u),Math.ceil(h*u))};
+  const pared=s.pared;
+  P(0,0,160,48,pared);
+  P(0,44,160,4,tono(pared,-.08));
+  P(0,44,160,1,tono(s.col,.35));
+  if(s.piso==="madera"){for(let y=48;y<70;y+=4){P(0,y,160,4,tono(s.tinte,((y/4)%3-1)*.03));P(0,y+3,160,1,tono(s.tinte,-.09))}}
+  else if(s.piso==="alfombra"){P(0,48,160,22,s.tinte);for(let y=50;y<70;y+=4)for(let x=(y/4)%2*2;x<160;x+=4)P(x,y,1,1,tono(s.tinte,-.05))}
+  else{for(let y=48;y<70;y+=6)for(let x=0;x<160;x+=8)P(x,y,8,6,((x/8+y/6)|0)%2?s.tinte:tono(s.tinte,-.04))}
+  P(10,10,24,34,"#B59F84");P(12,12,20,32,"#C8B49B");
+  const cs=[tono(s.col,-.05),"#7D8799","#B8ACA0"];
+  [13,24,35].forEach((r,ri)=>{P(12,r+8,20,1,"#9E886E");for(let i=0;i<5;i++)P(13+i*3.6,r+(i%2),2.4,8-(i%2),cs[(i+ri)%3])});
+  P(122,10,26,22,"#F7F8FA");P(124,12,22,18,"#D2E2EE");P(124,12,8,6,"#E6F0F7");P(134,12,2,18,"#F7F8FA");P(124,20,22,1.5,"#F7F8FA");
+  {const extra=EXTRA_NPC.filter(n=>SALAS[k].x[0]<=n.t[0]&&n.t[0]<=SALAS[k].x[1]&&SALAS[k].y[0]<=n.t[1]&&n.t[1]<=SALAS[k].y[1]);
+    extra.slice(0,2).forEach((n,i)=>busto(g,Math.round((i?95:35)*u),Math.round(13*u),n.l,Math.round(1.25*u)))}
+  if(k==="R"){rectorPix(g,Math.round(64*u),Math.round(10*u),Math.round(1.35*u),false)}
+  else{busto(g,Math.round(58*u),Math.round(6*u),LOOKS[k],Math.round(1.65*u))}
+  P(28,45,104,25,"#C2AC92");P(26,42,108,5,"#D6C3AC");P(26,42,108,1.5,"#E5D6C3");P(32,49,96,1,"#AC957B");
+  P(36,39,12,3,"#F7F8FA");P(37,38,10,1,"#E2E6EE");
+  P(54,51,52,13,s.col);P(55,52,50,11,"#F8FAFC");
+  g.fillStyle="#1E2536";g.font=`700 ${Math.round(5.4*u)}px "Pixelify Sans", monospace`;g.textAlign="center";g.textBaseline="middle";
+  const nom=k==="R"?"Alta Dir.":k==="P"?"Secretaría":k==="F"?"Talento H.":s.corto.length>16?s.corto.split(" ")[0]:s.corto;g.fillText(sinLig(nom),80*u,57.8*u);g.textAlign="left";
+}
+
+/* ================= Trama ================= */
+const MENTORA="P";
+const CAP=[
+ {intro:"Empecemos por lo fundamental: distinguir un conflicto operativo puntual de una conducta de riesgo psicosocial y canalizarlo preventivamente por el canal preventivo correspondiente.",arts:[1,2,15]},
+ {intro:"Cuando dos compañeros tienen roces por cargas de trabajo pero están dispuestos a dialogar, el orden y la confidencialidad son sagrados. Nunca los cites juntos antes de escucharlos por separado.",arts:[3,4,5]},
+ {intro:"Ante reportes de comunicación brusca y trato descalificador recurrente, aplicamos todo el debido proceso del CCL y articulamos acciones preventivas con Talento Humano y SST.",arts:[6,7,8]},
+ {intro:"¿Qué ocurre cuando en la mesa de diálogo no se logra acuerdo o la conducta persiste? El Comité no sanciona, pero escala recomendaciones a la Alta Dirección con copia al trabajador.",arts:[9,10,11]},
+ {intro:"En casos complejos contra el reloj, el control de tiempos es clave: los plazos no son acumulativos, ningún trámite puede superar 65 días calendario y el seguimiento mensual no cuenta en ese tope.",arts:[12,13,14]}
+];
+const MAX_HOJAS_NIVEL=4;
+const HOJAS=[
+ {a:1,rot:"Ficha 01 · Naturaleza",t:"Rol preventivo y conciliador",txt:"El Comité de Convivencia Laboral es una instancia obligatoria diseñada para proteger a los trabajadores contra los riesgos psicosociales y prevenir conflictos de convivencia laboral. Su rol es preventivo, orientador, conciliador y canalizador.",q:"¿Cuál es el rol principal del Comité de Convivencia Laboral?",o:[["Preventivo, orientador, conciliador y canalizador",1],["Disciplinario y sancionatorio",0],["Judicial para emitir fallos sancionatorios",0]],tile:[6,22]},
+ {a:2,rot:"Ficha 02 · Competencia",t:"Rol no sancionatorio",txt:"Por su naturaleza preventiva y conciliadora, el Comité de Convivencia Laboral no emite fallos disciplinarios ni impone sanciones.",q:"¿El Comité de Convivencia Laboral impone sanciones disciplinarias?",o:[["No, su rol es preventivo, orientador y conciliador",1],["Sí, emite fallos disciplinarios obligatorios",0],["Solo cuando lo solicita el jefe inmediato",0]],tile:[10,25]},
+ {a:3,rot:"Ficha 03 · Principios",t:"Confidencialidad, eficacia e imparcialidad",txt:"El Comité funciona bajo estrictos acuerdos de confidencialidad, eficacia e imparcialidad. Toda la información, actas y soportes del trámite tienen carácter reservado.",q:"¿Bajo qué principios funciona el Comité?",o:[["Confidencialidad, eficacia e imparcialidad",1],["Publicidad abierta y votación pública",0],["Jerarquía administrativa y celeridad",0]],tile:[6,20]},
+ {a:4,rot:"Ficha 04 · Conformación",t:"Representación paritaria 2026–2028",txt:"El Comité tiene un periodo de 2 años (2026–2028) y está integrado de forma paritaria por 2 representantes de los trabajadores y 2 del empleador, con sus respectivos suplentes.",q:"¿Cómo está conformado el Comité para el periodo 2026–2028?",o:[["2 representantes de trabajadores y 2 del empleador, con suplentes",1],["4 directivos nombrados únicamente por Rectoría",0],["1 representante de cada facultad sin suplentes",0]],tile:[6,16]},
+ {a:5,rot:"Ficha 05 · Paso 1",t:"Recepción y verificación (Máx. 5 días)",txt:"Paso 1 del procedimiento: La Secretaría del Comité recibe la queja por el canal oficial (comiteconvivencia@uniempresarial.edu.co) y verifica que sea competencia del Comité en máximo 5 días.",q:"¿Cuál es el plazo máximo para la recepción y verificación inicial de la queja?",o:[["Máximo 5 días",1],["Máximo 15 días",0],["Máximo 24 horas",0]],tile:[10,22]},
+ {a:6,rot:"Ficha 06 · Paso 2",t:"Análisis confidencial (5 + 10 días)",txt:"Paso 2: El Comité examina el caso puntual de manera confidencial en un plazo de 5 días, ampliable hasta por 10 días justificados (máximo 15 días).",q:"¿Hasta cuántos días puede ampliarse el análisis confidencial con justificación?",o:[["Hasta 15 días en total (5 + 10 justificados)",1],["Hasta 30 días sin necesidad de justificación",0],["No admite ampliación bajo ninguna circunstancia",0]],tile:[13,16]},
+ {a:7,rot:"Ficha 07 · Paso 3",t:"Escucha individual (5 días)",txt:"Paso 3: El Comité escucha a cada parte involucrada de manera individual sobre los hechos, garantizando confidencialidad y debido proceso, en un plazo de 5 días.",q:"¿Cómo se realiza la escucha de las partes en el Paso 3?",o:[["De manera individual (por separado) en 5 días",1],["En una audiencia conjunta desde el primer día",0],["Por escrito sin posibilidad de entrevista",0]],tile:[6,14]},
+ {a:8,rot:"Ficha 08 · Paso 4",t:"Diálogo y plan de mejora (5 + 10 días)",txt:"Paso 4: Se promueve una reunión de diálogo entre las partes para acordar compromisos y un plan de mejora concertado. Plazo: 5 días (+10 justificados, máximo 15 días).",q:"¿Qué se busca construir en el Paso 4 entre las partes?",o:[["Compromisos y un plan de mejora concertado",1],["Una sanción económica para el responsable",0],["El traslado forzoso de una de las partes",0]],tile:[10,10]},
+ {a:9,rot:"Ficha 09 · Paso 5",t:"Recomendaciones a Alta Dirección (5 a 10 días)",txt:"Paso 5: El Comité formula y presenta recomendaciones a la Alta Dirección (con copia al trabajador) en un plazo de 5 a 10 días, para que Talento Humano y SST apliquen las medidas.",q:"¿Quiénes aplican las medidas preventivas o correctivas recomendadas?",o:[["Talento Humano y SST",1],["Exclusivamente la Secretaría del Comité",0],["La oficina jurídica externa",0]],tile:[4,8]},
+ {a:10,rot:"Ficha 10 · Reuniones",t:"Sesiones ordinarias y extraordinarias",txt:"El Comité sesiona de manera ordinaria cada mes y de forma extraordinaria cuando se presenten casos que requieran su inmediata intervención.",q:"¿Con qué periodicidad sesiona ordinariamente el Comité?",o:[["De manera mensual",1],["Una vez al semestre",0],["Cada dos años al cambiar de integrantes",0]],tile:[13,11]},
+ {a:11,rot:"Ficha 11 · Paso 6",t:"Seguimiento mensual y cierre (Máx. 15 días)",txt:"Paso 6: El Comité realiza seguimiento mensual a los compromisos. El cierre toma máximo 15 días. Si no hay acuerdo o la conducta persiste, se informa a la Alta Dirección y se cierra el caso.",q:"¿Qué hace el Comité si no hay acuerdo entre las partes o la conducta persiste?",o:[["Informa a la Alta Dirección y cierra el caso",1],["Impone un llamado de atención con copia a la hoja de vida",0],["Mantiene el caso abierto indefinidamente",0]],tile:[17,14]},
+ {a:12,rot:"Ficha 12 · Límite Total",t:"Duración máxima: 65 días calendario",txt:"Según la Resolución 3461 de 2025, la duración total máxima del trámite es de 65 días calendario desde la recepción de la queja formal. Los plazos no son acumulativos.",q:"¿Cuál es la duración total máxima del procedimiento desde la recepción formal?",o:[["65 días calendario (plazos no acumulativos)",1],["90 días hábiles",0],["30 días calendario improrrogables",0]],tile:[15,7]},
+ {a:13,rot:"Ficha 13 · Seguimiento",t:"Cómputo del seguimiento mensual",txt:"El seguimiento mensual a los compromisos adquiridos por las partes no se contabiliza dentro del límite máximo de 65 días calendario del procedimiento.",q:"¿El seguimiento mensual cuenta dentro del límite de los 65 días calendario?",o:[["No, el seguimiento mensual no cuenta en ese límite",1],["Sí, reduce los días disponibles para escuchar a las partes",0],["Solo cuenta si el caso dura más de dos meses",0]],tile:[11,7]},
+ {a:14,rot:"Ficha 14 · Canal Oficial",t:"Requisitos de recepción y reserva",txt:"Las solicitudes de convivencia laboral se reciben por el canal oficial comiteconvivencia@uniempresarial.edu.co con descripción clara de hechos verificables y firma de acuerdo de confidencialidad.",q:"¿Por cuál canal oficial se reciben las quejas de convivencia laboral en Uniempresarial?",o:[["comiteconvivencia@uniempresarial.edu.co con acuerdo de confidencialidad",1],["Mediante carteleras públicas sin identificación de hechos",0],["Únicamente de manera verbal en cafetería",0]],tile:[14,7]},
+ {a:15,rot:"Ficha 15 · Normativa",t:"Resolución 3461 de 2025",txt:"La Resolución 3461 del 1 de septiembre de 2025 regula la conformación, funcionamiento y procedimiento preventivo de atención de quejas de los Comités de Convivencia Laboral.",q:"¿Qué norma actualiza el procedimiento y plazos del Comité de Convivencia Laboral?",o:[["Resolución 3461 del 1 de septiembre de 2025",1],["Decreto 1072 de 2015 únicamente",0],["Ley 100 de 1993",0]],tile:[6,2]}
+];
+
+const PROLOGO2=[
+ ["R","¡Bienvenido al Comité de Convivencia Laboral, {n}! Soy el Rector. En Uniempresarial trabajamos por un entorno laboral respetuoso, seguro y saludable."],
+ ["C","Hola, {n}. Soy Alexandra Neira, Presidenta del CCL (2026–2028). Recuerda siempre nuestro principio rector: somos una instancia preventiva, orientadora y conciliadora; no sancionamos ni emitimos fallos disciplinarios."],
+ ["P","Y yo soy Paola Montenegro, Secretaria del Comité. Hoy tenemos 5 casos de convivencia laboral en bandeja y las fichas de la Resolución 3461 de 2025 están distribuidas por la sede (hasta 4 por capítulo)."],
+ ["F","Hola, {n}. Soy Yazmín Lizarazo y junto al Tutor de Talento Humano lideramos Talento Humano y SST para aplicar medidas preventivas y acompañar los planes de mejora."],
+ ["BS","Y yo soy Beatriz Taborda, Presidenta Suplente del CCL. Junto a Diana Melo y Andreina te acompañaremos en el Comité; si necesitas orientación en cualquier momento, toca el botón Pista."]
+];
+
+/* ================= Catálogo de trámites ================= */
+const ITEMS={
+ recepcion:{sala:"P",n:"Radicar y verificar competencia (Paso 1)",no:"Este caso no requiere apertura en Secretaría.",c:"Resolución 3461 de 2025 · Paso 1 (Máx. 5 días)"},
+ docs:{sala:"P",n:"Revisar soportes y confidencialidad",tipo:"docs",c:"Resolución 3461 de 2025 · Principio de confidencialidad"},
+ analisis:{sala:"M",n:"Análisis confidencial del caso (Paso 2)",no:"Este caso no pasa a análisis del pleno del Comité.",c:"Resolución 3461 de 2025 · Paso 2 (5 + 10 días)"},
+ escucha:{sala:"A",n:"Escucha individual de las partes (Paso 3)",no:"No procede escucha individual en este caso.",c:"Resolución 3461 de 2025 · Paso 3 (5 días)"},
+ dialogo:{sala:"O",n:"Espacio de diálogo y plan de mejora (Paso 4)",no:"En este caso no procede espacio de conciliación.",c:"Resolución 3461 de 2025 · Paso 4 (5 + 10 días)"},
+ medidas_th:{sala:"F",n:"Medidas preventivas con Talento Humano y SST",no:"No se requieren medidas preventivas adicionales de Talento Humano y SST aquí.",c:"Resolución 3461 de 2025 · Paso 5"},
+ recom_ad:{sala:"R",n:"Presentar recomendaciones a Alta Dirección (Paso 5)",no:"No requiere informe de recomendación a Alta Dirección en este caso.",c:"Resolución 3461 de 2025 · Paso 5 (5 a 10 días)"},
+ cierre_ccl:{sala:"C",n:"Seguimiento y cierre en Presidencia CCL (Paso 6)",tipo:"radicar"},
+ orientar_th:{sala:"F",n:"Orientar y cerrar en Talento Humano y SST",tipo:"radicar"}
+};
+const SALUDO={
+ U:"Aquí está su puesto de trabajo. Puede releer el caso en cualquier momento para verificar fechas, canales y hechos.",
+ P:"Hola, soy Paola Montenegro, Secretaria del Comité. Aquí recibimos las quejas por el canal oficial y verificamos los acuerdos de confidencialidad.",
+ A:"Soy Diana Melo. En esta sala escuchamos a cada parte por separado, con reserva, respeto y debido proceso.",
+ O:"Soy Claudia Velandia. Aquí facilitamos el diálogo entre las partes para construir compromisos y planes de mejora concertados.",
+ F:"Soy Yazmín Lizarazo. Junto con el Tutor de Talento Humano aplicamos desde Talento Humano y SST las medidas preventivas y correctivas de riesgo psicosocial.",
+ M:"Sesión del Comité de Convivencia Laboral con Beatriz Taborda (Presidenta Suplente), Diana Melo y Andreina. Aquí examinamos los casos de forma reservada e imparcial.",
+ R:"Alta Dirección. Recibimos las recomendaciones del Comité o los informes de cierre cuando no se logra acuerdo.",
+ C:"Soy Alexandra Neira, Presidenta del CCL. Aquí validamos el seguimiento mensual y firmamos el cierre formal del expediente."
+};
+const FORMATOS={
+ ACTA_CONC:{c:"CCL-FM-01",n:"Acta de Diálogo, Compromisos y Plan de Mejora Concertado",v:"Resolución 3461 de 2025 · Pasos 4 y 6"},
+ ACTA_SEG:{c:"CCL-FM-02",n:"Acta de Seguimiento Mensual de Compromisos",v:"Resolución 3461 de 2025 · Paso 6"},
+ INF_AD:{c:"CCL-FM-03",n:"Informe de Recomendaciones y Cierre a Alta Dirección",v:"Resolución 3461 de 2025 · Pasos 5 y 6"},
+ ORIENT_TH:{c:"CCL-FM-04",n:"Constancia de No Competencia y Orientación Preventiva",v:"Resolución 3461 de 2025 · Paso 1"}
+};
+
+/* ================= Misiones (5 casos prácticos CCL) ================= */
+const MIS=[
+{t:"Ajuste de cronograma académico",nivel:1,de:"Coordinación Académica",canal:"Correo",
+ msj:"Un docente envía una queja porque su coordinador le pidió ajustar el cronograma de entregas tras un retraso puntual en notas. Dice que se sintió presionado por esa única instrucción respetuosa.",
+ ficha:[["Fecha recepción","Martes 3 de noviembre de 2026"],["Antecedentes","Hecho único, instrucción respetuosa"],["Plazo Paso 1","Máximo 5 días"],["Rol CCL","Preventivo y orientador"]],
+ necesita:{
+   recepcion:"Paso 1: Queja recibida y verificada en Secretaría dentro de los 5 días.",
+   docs:"Soportes del caso revisados bajo reserva.",
+   analisis:"Paso 2: El Comité examina el caso confidencialmente y concluye que es una instrucción operativa puntual, no un conflicto de convivencia competencia del Comité."
+ },
+ pre:{analisis:["recepcion"]},neutro:[],destino:"F",formato:"ORIENT_TH",
+ docs:[
+   ["Correo de solicitud del docente","Con fecha y descripción clara del hecho",1,"Cumple con los datos básicos de recepción."],
+   ["Soporte de instrucción laboral","Correo donde el coordinador solicita el ajuste de notas de forma respetuosa",1,"Permite verificar el contexto objetivo del caso."],
+   ["Borrador de sanción disciplinaria","Para que el Comité amoneste al coordinador",0,"El CCL no impone sanciones ni emite fallos disciplinarios."]
+ ],
+ campos:[
+   {k:"Alcance",q:"¿Qué determina el Comité frente a esta situación?",o:[["Que es una instrucción operativa puntual; orienta preventivamente sin emitir fallos",1],["Emite una resolución disciplinaria sobre el caso",0],["Sanciona al docente por presentar una queja",0]],p:"El Comité no emite fallos disciplinarios; su rol es preventivo y orientador.",c:"Funciones CCL · Resolución 3461 de 2025"},
+   {k:"Canalización",q:"¿A qué área se remite orientación preventiva para fortalecer la comunicación del equipo?",o:[["Talento Humano y SST (Yazmín Lizarazo) para acciones preventivas",1],["A la oficina de compras y suministros",0],["Se archiva sin dar respuesta al docente",0]],p:"Talento Humano y SST lideran las medidas preventivas y de clima laboral.",c:"Procedimiento CCL · Orientación preventiva"}
+ ],
+ leccion:"Las instrucciones técnicas o académicas respetuosas y puntuales no constituyen conflicto de convivencia; el Comité orienta y canaliza hacia Talento Humano y SST."},
+
+{t:"Tensión y roces entre compañeros",nivel:2,de:"Área Administrativa",canal:"Correo",
+ msj:"Dos analistas tienen choques verbales por las cargas de trabajo que afectan el clima de la oficina, pero ambos manifiestan disposición para dialogar y construir acuerdos.",
+ ficha:[["Fecha recepción","Jueves 1 de octubre de 2026"],["Plazo Paso 3","5 días (escucha individual)"],["Plazo Paso 4","5 días (+10 justificados)"],["Límite total","65 días calendario"]],
+ necesita:{
+   recepcion:"Paso 1: Queja recibida y verificada en Secretaría (máx. 5 días).",
+   docs:"Paso 1: Acuerdos de confidencialidad firmados.",
+   analisis:"Paso 2: Examen confidencial del caso por el Comité.",
+   escucha:"Paso 3: Escucha individual de cada analista por separado (5 días).",
+   dialogo:"Paso 4: Espacio de diálogo donde firman compromisos y plan de mejora concertado.",
+   medidas_th:"Paso 5: Talento Humano y SST acompañan acciones preventivas de distribución y comunicación."
+ },
+ pre:{analisis:["recepcion"],escucha:["analisis"],dialogo:["escucha"],medidas_th:["dialogo"]},neutro:[],destino:"C",formato:"ACTA_CONC",
+ docs:[
+   ["Acuerdo de confidencialidad firmado","Suscrito por las partes y los miembros del Comité",1,"Indispensable para garantizar la reserva del proceso."],
+   ["Citación conjunta inicial (sin escucha previa)","Invitación para que ambos discutan frente a frente desde el día 1",0,"Error de procedimiento: primero debe hacerse la escucha individual (Paso 3)."],
+   ["Actas de escucha individual","Firmadas por separado por cada involucrado",1,"Garantiza el debido proceso y la imparcialidad."]
+ ],
+ campos:[
+   {k:"Orden procesal",q:"¿Qué debe ocurrir antes de reunir a las dos partes en el espacio de diálogo?",o:[["Escuchar a cada parte de manera individual sobre los hechos (Paso 3)",1],["Emitir recomendaciones a la Alta Dirección",0],["Cerrar el expediente sin escucharlas",0]],p:"El Paso 3 exige escuchar a cada parte por separado antes de pasar al diálogo (Paso 4).",c:"Procedimiento CCL · Pasos 3 y 4"},
+   {k:"Resultado",q:"¿Qué documento formaliza el acuerdo entre las partes?",o:[["Acta de compromisos y plan de mejora concertado (CCL-FM-01)",1],["Resolución sancionatoria del Comité",0],["Memorando disciplinario con copia a hoja de vida",0]],p:"En el Paso 4 se acuerdan compromisos y un plan de mejora concertado.",c:"Resolución 3461 de 2025 · Paso 4"},
+   {k:"Seguimiento",q:"¿Con qué frecuencia hace seguimiento el Comité a los compromisos?",o:[["Seguimiento mensual (y no cuenta en el límite de 65 días)",1],["Una vez al año",0],["No se hace seguimiento una vez firmada el acta",0]],p:"El Paso 6 establece seguimiento mensual, el cual no se contabiliza dentro de los 65 días calendario.",c:"Resolución 3461 de 2025 · Paso 6"}
+ ],
+ leccion:"Respeta siempre la secuencia: Recepción -> Análisis -> Escucha individual -> Diálogo y plan de mejora -> Seguimiento mensual."},
+
+{t:"Comunicación brusca y sobrecarga",nivel:2,de:"Coordinación de Proyectos",canal:"Correo",
+ msj:"Un colaborador reporta trato descalificador recurrente de un par frente a otros compañeros en reuniones de seguimiento. Ambos aceptan participar en la ruta de convivencia laboral.",
+ ficha:[["Fecha recepción","Lunes 12 de octubre de 2026"],["Conducta","Trato descalificador recurrente"],["Plazo Paso 3","5 días (escucha individual)"],["Límite total","65 días calendario"]],
+ necesita:{
+   recepcion:"Paso 1: Recepción y verificación en Secretaría (máx. 5 días).",
+   docs:"Paso 1: Soportes y acuerdos de confidencialidad verificados.",
+   analisis:"Paso 2: Análisis confidencial del caso en sesión del Comité.",
+   escucha:"Paso 3: Escucha individual de cada colaborador por separado (5 días).",
+   dialogo:"Paso 4: Reunión de diálogo y firma de compromisos de comunicación asertiva.",
+   medidas_th:"Paso 5: Talento Humano y SST activan talleres de clima laboral y comunicación respetuosa."
+ },
+ pre:{analisis:["recepcion"],escucha:["analisis"],dialogo:["escucha"],medidas_th:["dialogo"]},neutro:[],destino:"C",formato:"ACTA_CONC",
+ docs:[
+   ["Relato cronológico de hechos","Enviado al correo oficial comiteconvivencia@uniempresarial.edu.co",1,"Permite identificar las fechas y contexto de los episodios."],
+   ["Acuerdo de confidencialidad suscrito","Firmado antes de iniciar las entrevistas",1,"Protege la reserva e imparcialidad del trámite."],
+   ["Llamado de atención escrito emitido por el CCL","Sanción formal dirigida al compañero reportado",0,"Incorrecto: el CCL no ejerce potestad disciplinaria ni emite llamados de atención."]
+ ],
+ campos:[
+   {k:"Compromisos",q:"¿Qué se acuerda en el espacio de diálogo del Paso 4?",o:[["Compromisos de comunicación asertiva y plan de mejora concertado",1],["Una multa económica descontada de nómina",0],["El cambio obligatorio de cargo sin consulta",0]],p:"El Paso 4 busca compromisos mutuos y un plan de mejora concertado entre las partes.",c:"Resolución 3461 de 2025 · Paso 4"},
+   {k:"Apoyo preventivo",q:"¿Qué área ejecuta las acciones de clima laboral y prevención psicosocial?",o:[["Talento Humano y SST (Yazmín Lizarazo y Tutor de Talento Humano)",1],["La oficina de contabilidad",0],["Exclusivamente los compañeros de área",0]],p:"Talento Humano y SST implementan las acciones preventivas y correctivas de riesgo psicosocial.",c:"Resolución 3461 de 2025 · Paso 5"}
+ ],
+ leccion:"Ante comunicación brusca recurrente, el debido proceso completo, los compromisos asertivos y el acompañamiento de Talento Humano y SST previenen el riesgo psicosocial."},
+
+{t:"Sin acuerdo en la mesa de diálogo",nivel:2,de:"Dirección de Operaciones",canal:"Correo",
+ msj:"Tras realizar la escucha individual y la reunión conjunta por un conflicto de trato inadecuado, una de las partes se niega a firmar el plan de mejora y la conducta persiste.",
+ ficha:[["Fecha recepción","Lunes 14 de septiembre de 2026"],["Estado","Sin acuerdo / Persistencia"],["Plazo Paso 5","5 a 10 días"],["Cierre Paso 6","Máx. 15 días"]],
+ necesita:{
+   recepcion:"Paso 1: Recepción formal registrada.",
+   docs:"Soportes y actas previas verificadas.",
+   analisis:"Paso 2: Análisis confidencial completado.",
+   escucha:"Paso 3: Escuchas individuales realizadas.",
+   dialogo:"Paso 4: Reunión de diálogo realizada (constancia de no acuerdo).",
+   recom_ad:"Paso 5: Recomendaciones formales presentadas a Alta Dirección con copia al trabajador (5 a 10 días).",
+   medidas_th:"Paso 5: Talento Humano y SST notificados para medidas preventivas."
+ },
+ pre:{analisis:["recepcion"],escucha:["analisis"],dialogo:["escucha"],recom_ad:["dialogo"],medidas_th:["recom_ad"]},neutro:[],destino:"C",formato:"INF_AD",
+ docs:[
+   ["Constancia de reunión sin acuerdo","Suscrita por el Comité dejando registro de la falta de consenso",1,"Soporte válido del Paso 4 cuando no hay acuerdo."],
+   ["Copia de recomendaciones para el trabajador","Documento que se entrega al trabajador junto con el envío a Alta Dirección",1,"El Paso 5 indica que se presentan a Alta Dirección con copia al trabajador."],
+   ["Orden de despido redactada por el CCL","Sanción directa contra el presunto responsable",0,"El Comité no tiene facultades sancionatorias ni disciplinarias."]
+ ],
+ campos:[
+   {k:"Falta de acuerdo",q:"Si no hay acuerdo o la conducta persiste, ¿qué debe hacer el Comité?",o:[["Informar a la Alta Dirección (con copia al trabajador) y cerrar el caso",1],["Obligar a las partes a firmar el acta de conciliación",0],["Sancionar disciplinariamente al implicado",0]],p:"Cuando no hay acuerdo o persiste la conducta, se informa a la Alta Dirección y se procede al cierre (máx. 15 días).",c:"Procedimiento CCL · Pasos 5 y 6"},
+   {k:"Plazo Paso 5",q:"¿Cuál es el plazo para presentar las recomendaciones a la Alta Dirección?",o:[["De 5 a 10 días",1],["60 días hábiles",0],["1 día calendario",0]],p:"El Paso 5 establece un plazo de 5 a 10 días.",c:"Resolución 3461 de 2025 · Paso 5"}
+ ],
+ leccion:"Cuando no se logra acuerdo o la conducta persiste, el Comité escala recomendaciones a la Alta Dirección con copia al trabajador y cierra el caso."},
+
+{t:"Caso complejo contra el reloj",nivel:3,de:"Vicerrectoría Académica",canal:"Correo",
+ msj:"Un conflicto de equipo que lleva 42 días calendario transcurridos requiere ampliar el plazo de análisis y diálogo (+10 días justificados). Vigile el límite máximo de 65 días calendario.",
+ ficha:[["Fecha recepción","Lunes 21 de septiembre de 2026"],["Días transcurridos","42 días calendario"],["Límite máximo","65 días calendario"],["Prórrogas","Hasta +10 días justificados"]],
+ necesita:{
+   recepcion:"Paso 1: Recepción verificada (5 días).",
+   docs:"Expediente reservado y prórrogas justificadas al día.",
+   analisis:"Paso 2: Análisis confidencial ampliado con justificación (máx. 15 días).",
+   escucha:"Paso 3: Escucha individual de todos los involucrados (5 días).",
+   dialogo:"Paso 4: Diálogo y plan de mejora concertado (máx. 15 días).",
+   recom_ad:"Paso 5: Recomendaciones enviadas a Alta Dirección con copia al trabajador (5 a 10 días).",
+   medidas_th:"Paso 5: Talento Humano y SST implementan intervención psicosocial."
+ },
+ pre:{analisis:["recepcion"],escucha:["analisis"],dialogo:["escucha"],recom_ad:["dialogo"],medidas_th:["recom_ad"]},neutro:[],destino:"C",formato:"INF_AD",
+ docs:[
+   ["Justificación escrita de ampliación de plazo","Acta donde el CCL motiva los 10 días adicionales en análisis y diálogo",1,"La Resolución 3461 permite +10 días solo si están debidamente justificados."],
+   ["Cronograma de cierre dentro de los 65 días calendario","Control de fechas desde la recepción formal de la queja",1,"Garantiza el cumplimiento del término máximo legal."],
+   ["Suma acumulativa de todos los plazos máximos (80 días)","Cálculo que excede los 65 días calendario",0,"Error: los plazos no son acumulativos y nunca pueden superar 65 días calendario."]
+ ],
+ campos:[
+   {k:"Término máximo",q:"¿Cuál es la duración total máxima desde la recepción de la queja formal?",o:[["65 días calendario (los plazos parciales no son acumulativos)",1],["65 días hábiles más vacaciones",0],["Ilimitada mientras haya reuniones mensuales",0]],p:"La Resolución 3461 de 2025 fija un tope de 65 días calendario; los plazos no son acumulativos.",c:"Resolución 3461 de 2025"},
+   {k:"Prórrogas",q:"¿En qué etapas se permite ampliar el plazo por 10 días justificados (máx. 15)?",o:[["En el Análisis confidencial (Paso 2) y en el Diálogo/plan de mejora (Paso 4)",1],["En la Recepción inicial (Paso 1)",0],["En ninguna etapa del proceso",0]],p:"Tanto el Paso 2 como el Paso 4 permiten 5 días + 10 justificados (máx. 15 días).",c:"Procedimiento CCL · Pasos 2 y 4"},
+   {k:"Seguimiento",q:"¿Qué ocurre con el seguimiento mensual tras cerrar el trámite dentro de los 65 días?",o:[["Se realiza mensualmente y no cuenta dentro del límite de 65 días calendario",1],["Debe hacerse antes del día 65 o se anula el acuerdo",0],["Lo realiza únicamente el trabajador afectado",0]],p:"El seguimiento mensual es posterior al acuerdo y no se computa en los 65 días calendario.",c:"Resolución 3461 de 2025 · Paso 6"}
+ ],
+ leccion:"Los plazos de cada etapa no son acumulativos: todo el trámite debe resolverse dentro de los 65 días calendario desde la recepción formal."}
+];
+
+/* ================= Estado ================= */
+const S={look:Object.assign({},LOOK_BASE,leerJSON("ccl_look",{})),best:leerJSON("ccl_best",{}),hojas:leerJSON("ccl_hojas",{}),vistoPrologo:!!leer("ccl_prologo2"),
+  m:0,pts:0,carpeta:{},pedidos:{},devol:0,ayudas:0,log:[],px:5,py:23,camino:[],dest:null,dir:"d",frame:0,hint:null,viendo:false,formErr:0,campOk:0,enJuego:false,
+  cam:{x:0,y:0},zoomExtra:Math.max(.45,Math.min(1.8,+leer("ccl_zoom")||1))};
+const app=document.getElementById("app");
+let cv=null,ctx=null,raf=0,vista={w:0,h:0,z:1,zBase:1,dpr:1};
+
+/* ================= Portada ================= */
+function salirDelJuego(){S.enJuego=false;if(unsub){unsub();unsub=null}document.body.classList.remove("jugando");const j=document.getElementById("juego");if(j)j.remove();window.removeEventListener("resize",ajustarVista)}
+function portada(){
+  cancelAnimationFrame(raf);salirDelJuego();
+  if(!leer("ccl_look")){estudio(true);return}
+  app.innerHTML="";
+  const total=Object.values(S.best).reduce((a,b)=>a+b,0), nh=Object.keys(S.hojas).length, hechas=Object.keys(S.best).length;
+  app.append(el(`<section class="portada">
+    <header class="ccl-banner">
+      <div class="ccl-banner-grid">
+        <div class="ccl-banner-info">
+          <div class="ccl-banner-top">
+            <img src="${LOGO}" alt="Uniempresarial, Fundación Universitaria Empresarial">
+            <span class="ccl-pill">CCL · 2026–2028</span>
+          </div>
+          <div class="ccl-tit">
+            <small>Resolución 3461 de 2025</small>
+            <h1>Bandeja de Convivencia</h1>
+            <p>Gestiona los 5 expedientes respetando la confidencialidad, el debido proceso y el plazo máximo de 65 días calendario.</p>
+          </div>
+        </div>
+        <div class="ccl-escena-wrap">
+          <canvas id="heroc" width="320" height="260" aria-hidden="true"></canvas>
+          <div class="ccl-escena-tag">
+            <div><b>Alexandra Neira</b><span>Presidenta CCL</span></div>
+            <span>Sede UE</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="ccl-stats">
+      <div class="ccl-stat"><span>Expedientes</span><b>${hechas}/${MIS.length}</b><div class="barrita"><i style="width:${hechas/MIS.length*100}%"></i></div></div>
+      <div class="ccl-stat"><span>Fichas Res. 3461</span><b>${nh}/${HOJAS.length}</b><div class="barrita"><i style="width:${nh/HOJAS.length*100}%"></i></div></div>
+      <div class="ccl-stat"><span>Puntaje total</span><b>${total+puntosHojas()}</b><span style="font-size:10px;text-transform:none">pts acumulados</span></div>
+    </div>
+
+    <div class="ccl-dock">
+      <button id="per"><i>PERFIL</i><span>Mi personaje</span></button>
+      <button id="alb"><i>${nh}/${HOJAS.length}</i><span>Fichas guía</span></button>
+      <button id="man"><i>NORMA</i><span>Guía rápida</span></button>
+    </div>
+
+    ${hechas===MIS.length?`<button class="btn rojo" id="aud">Presentar informe de cierre ante Alta Dirección</button>`:""}
+
+    <span class="eti">Bandeja de casos asignados (${MIS.length} capítulos)</span>
+    <div class="misiones">${MIS.map((m,i)=>`<button class="mis ${S.best[i]!=null?"ok":""}" data-i="${i}">
+      <div class="mis-head"><span class="n">CASO 0${i+1}</span><span class="st ${S.best[i]!=null?"":"no"}">${S.best[i]!=null?S.best[i]+" pts":"Pendiente"}</span></div>
+      <div><b>${esc(m.t)}</b><small>${"★".repeat(m.nivel)}${"☆".repeat(3-m.nivel)} · Formato ${FORMATOS[m.formato].c}</small></div>
+    </button>`).join("")}</div>
+
+    <div class="ccl-dock">
+      <button id="pro"><i>INTRO</i><span>Bienvenida</span></button>
+      <button id="apr"><i>RESUMEN</i><span>Lo aprendido</span></button>
+      <button id="son" aria-pressed="${sonido}"><i>AUDIO</i><span>Sonido: ${sonido?"sí":"no"}</span></button>
+    </div>
+
+    <section class="marco"><span class="eti">Registro de participantes</span><p class="nota" id="rkn">Conectando el registro de participantes…</p><ol class="rank" id="rkl"></ol></section>
+    <p class="nota">Casos ficticios de entrenamiento. Basado en la Resolución 3461 del 1 de septiembre de 2025 y los lineamientos del CCL Uniempresarial (2026–2028).</p>
+  </section>`));
+  heroAnim();
+  app.querySelectorAll(".mis").forEach(b=>b.onclick=()=>iniciar(+b.dataset.i));
+  document.getElementById("per").onclick=()=>estudio(false);
+  document.getElementById("alb").onclick=album;
+  document.getElementById("man").onclick=manual;
+  document.getElementById("pro").onclick=()=>dialogo(PROLOGO2,null);
+  document.getElementById("apr").onclick=resumen;
+  document.getElementById("son").onclick=e=>{sonido=!sonido;guardar("ccl_sonido",sonido?"1":"0");e.currentTarget.querySelector("span").textContent="Sonido: "+(sonido?"sí":"no");e.currentTarget.setAttribute("aria-pressed",sonido);if(sonido)SFX.ok()};
+  const au=document.getElementById("aud"); if(au)au.onclick=auditoria;
+  verRanking();
+}
+function heroAnim(){
+  cancelAnimationFrame(raf);
+  const c=document.getElementById("heroc"); if(!c)return; const g=c.getContext("2d"),CW=c.width||320,CH=c.height||260; g.imageSmoothingEnabled=false;
+  let x=-20;
+  const paso=t=>{ if(!c.isConnected)return; raf=requestAnimationFrame(paso); if(!fondo)pintarFondo();
+    g.drawImage(fondo,6*TP,0,8*TP,7.5*TP,0,0,CW,CH);
+    g.fillStyle="rgba(15,23,48,.34)";g.fillRect(0,0,CW,CH);
+    x+=0.65; if(x>CW+30)x=-40; const fr=Math.floor(t/150)%4;
+    for(let i=0;i<5;i++){const hx=(i*74+t/24)%(CW+60)-30,hy=26+Math.sin(t/420+i)*14+i*14;g.save();g.translate(hx,hy);g.rotate(Math.sin(t/300+i)*.5);g.fillStyle="#FFF8E1";g.fillRect(-6,-8,12,16);g.fillStyle="#E80A0A";g.fillRect(-6,-8,12,3);g.fillStyle="#C9B98A";g.fillRect(-4,-2,8,1);g.fillRect(-4,2,8,1);g.restore()}
+    personaje(g,x,CH-94,S.look,"r",fr,3);
+    const bob=Math.round(Math.sin(t/450)*2);
+    g.fillStyle="rgba(0,0,0,.38)";g.beginPath();g.ellipse(CW-86,CH-32,68,12,0,0,7);g.fill();
+    busto(g,CW-164,CH-212+bob,LOOKS.C,6);
+  };
+  raf=requestAnimationFrame(paso);
+}
+
+/* ================= Personaje ================= */
+function estudio(primera){
+  cancelAnimationFrame(raf);salirDelJuego();
+  const L=Object.assign({},LOOK_BASE,S.look);
+  app.innerHTML="";
+  const sw=(k,arr)=>`<div class="sw" data-k="${k}">${arr.map(c=>`<button class="${c?"":"nada"}" style="${c?"background:"+c:""}" data-v="${c}" aria-label="${c?"Color "+c:"Sin corbata"}" aria-pressed="${L[k]===c}"></button>`).join("")}</div>`;
+  const ch=(k,arr)=>`<div class="chips" data-k="${k}">${arr.map(([v,t])=>`<button data-v="${v}" aria-pressed="${L[k]===v}">${t}</button>`).join("")}</div>`;
+  app.append(el(`<section class="estudio">
+    <span class="eti">${primera?"Antes de empezar":"Mi personaje"}</span><h1 style="font-size:28px">Arme su personaje</h1>
+    <div class="preview"><canvas width="128" height="128"></canvas><canvas width="128" height="128"></canvas><canvas width="128" height="128"></canvas><canvas width="128" height="128"></canvas></div>
+    <div class="campo"><label for="nom" style="font-weight:600;font-size:14px">Nombre o alias (también sale en el registro de participantes)</label><input id="nom" maxlength="20" autocomplete="nickname" placeholder="Ej.: Ana de Bienestar" value="${esc(L.nombre||leer("ccl_alias")||"")}"><p class="nota" style="margin-top:4px">Su alias y su puntaje quedan en el registro de participantes de esta capacitación.</p></div>
+    <div class="opcion"><span>Tono de piel</span>${sw("piel",OPC.piel)}</div>
+    <div class="opcion"><span>Peinado</span>${ch("peloEst",OPC.peloEst)}</div>
+    <div class="opcion"><span>Color del pelo</span>${sw("peloCol",OPC.peloCol)}</div>
+    <div class="opcion"><span>Bigote o barba (del color del pelo)</span>${ch("facial",OPC.facial)}</div>
+    <div class="opcion"><span>Camisa o saco</span>${sw("camisa",OPC.camisa)}</div>
+    <div class="opcion"><span>Corbata</span>${sw("corbata",OPC.corbata)}</div>
+    <div class="opcion"><span>Abajo</span>${ch("abajo",OPC.abajo)}${sw("abajoCol",OPC.abajoCol)}</div>
+    <div class="opcion"><span>Accesorio</span>${ch("acc",OPC.acc)}</div>
+    <div class="fila2"><button class="btn sec" id="azar">Al azar</button><button class="btn" id="listo">${primera?"Entrar a la sede":"Guardar"}</button></div>
+  </section>`));
+  const cvs=[...app.querySelectorAll(".preview canvas")],dirs=["d","r","u","l"];
+  const anim=t=>{raf=requestAnimationFrame(anim);const fr=Math.floor(t/180)%4;cvs.forEach((c,i)=>{const g=c.getContext("2d");g.imageSmoothingEnabled=false;g.clearRect(0,0,128,128);personaje(g,0,0,L,dirs[i],i===0?0:fr,8)})};
+  raf=requestAnimationFrame(anim);
+  const sync=()=>app.querySelectorAll("[data-k]").forEach(gr=>gr.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(L[gr.dataset.k]===b.dataset.v))));
+  app.querySelectorAll("[data-k] button").forEach(b=>b.onclick=()=>{L[b.parentElement.dataset.k]=b.dataset.v;sync()});
+  document.getElementById("azar").onclick=()=>{const r=a=>a[Math.floor(Math.random()*a.length)];
+    L.piel=r(OPC.piel);L.peloEst=r(OPC.peloEst)[0];L.peloCol=r(OPC.peloCol);L.camisa=r(OPC.camisa);L.abajo=r(OPC.abajo)[0];L.abajoCol=r(OPC.abajoCol);L.acc=r(OPC.acc)[0];L.facial=r(OPC.facial)[0];L.corbata=r(OPC.corbata);sync()};
+  document.getElementById("listo").onclick=()=>{
+    L.nombre=(document.getElementById("nom").value||"").trim().slice(0,20)||"Colaborador";
+    S.look=L;guardar("ccl_look",JSON.stringify(L));guardar("ccl_alias",L.nombre);
+    publicar();
+    cancelAnimationFrame(raf);
+    if(!S.vistoPrologo){portadaVacia();dialogo(PROLOGO2,()=>{S.vistoPrologo=true;guardar("ccl_prologo2","1");portada()})}
+    else portada();
+  };
+}
+function portadaVacia(){app.innerHTML=`<div class="hero"><canvas id="heroc" width="480" height="300" aria-hidden="true"></canvas><img class="logo" src="${LOGO}" alt="Uniempresarial"></div>`;heroAnim()}
+
+/* ================= Diálogos ================= */
+function dialogo(lineas,fin){
+  let i=0;
+  const pinta=()=>{
+    const [q,txt]=Array.isArray(lineas[i])?lineas[i]:["P",lineas[i]];
+    const nombre=NOMBRE[q]||ROL[q];
+    const h=hoja(`<span class="eti">${esc(SALAS[q]?SALAS[q].n:"")}</span><div class="npc dialogo">${retratoHTML(q)}<div class="globo"><b class="quien">${esc(nombre)}</b>${esc(txt.replace("{n}",S.look.nombre||""))}</div></div>
+      <div class="fila2"><span class="nota" style="align-self:center">${i+1} de ${lineas.length}</span><button class="btn" id="dsig">${i+1<lineas.length?"Siguiente":"Entendido"}</button></div>`,()=>{if(fin){const f=fin;fin=null;f()}});
+    h.querySelector("#dsig").onclick=()=>{if(i+1<lineas.length){i++;pinta()}else cerrarHoja()};
+  };
+  pinta();
+}
+
+/* ================= Juego a pantalla completa ================= */
+function iniciar(i){
+  cancelAnimationFrame(raf);if(unsub){unsub();unsub=null}
+  Object.assign(S,{m:i,pts:0,carpeta:{},pedidos:{},devol:0,ayudas:0,log:[],px:5,py:23,camino:[],dest:null,dir:"d",hint:null,viendo:false,formErr:0,campOk:0,enJuego:true});
+  S.rev={};FX.length=0;chispas.length=0;for(const k in luzSala)delete luzSala[k];S.tut=(i===0&&!Object.keys(S.best).length)?0:-1;S.tutT=0;S.pintado=false;
+  const m=MIS[i];
+  app.innerHTML="";
+  const j=el(`<div class="juego" id="juego">
+    <canvas class="mundo" id="cv" tabindex="0" aria-label="Mapa de la sede. Toque el piso o una oficina para caminar; con el teclado use las flechas."></canvas>
+    <div class="hud arriba">
+      <div class="chipo cap"><span class="eti" style="color:inherit;opacity:.75">Capítulo ${i+1}</span><span><b style="display:inline;font-size:15px">${esc(m.t)}</b></span><span id="obj" style="font-size:12px;opacity:.9"></span></div>
+      <div class="chipo" style="text-align:right"><span style="opacity:.75">Puntos</span><b id="pts">0</b></div>
+      <div class="zoom"><button class="hb" id="zMas" aria-label="Acercar"><i>+</i></button><button class="hb" id="zMenos" aria-label="Alejar"><i>−</i></button></div>
+    </div>
+    <div class="aviso" id="aviso">Toque una oficina o el piso para caminar.</div>
+    <div class="hud abajo"><div class="botonera">
+      <button class="hb prim" id="bOfi"><i>⌂</i>Oficinas</button>
+      <button class="hb" id="bCaso"><i>✉</i>Caso</button>
+      <button class="hb" id="bAlb"><i>❏</i><span id="nh">${Object.keys(S.hojas).length}/${HOJAS.length}</span></button>
+      <button class="hb" id="bPista"><i>?</i>Pista</button>
+      <button class="hb" id="bMan"><i>§</i>Reglas</button>
+      <button class="hb" id="bSalir"><i>×</i>Salir</button>
+    </div></div>
+  </div>`);
+  document.body.append(j);document.body.classList.add("jugando");
+  cv=document.getElementById("cv");ctx=cv.getContext("2d");
+  if(!fondo)pintarFondo();
+  ajustarVista();window.addEventListener("resize",ajustarVista);
+  encuadrarCam(1);
+  let pIni=null,pinch=null,fuePinch=false;const ptrs=new Map();
+  cv.addEventListener("pointerdown",e=>{
+    ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+    if(ptrs.size===2){const [[x1,y1],[x2,y2]]=[...ptrs.values()];pinch={d:Math.hypot(x2-x1,y2-y1)||1,z:S.zoomExtra};fuePinch=true;pIni=null}
+    else if(ptrs.size===1&&(e.button===0||e.pointerType!=="mouse")){fuePinch=false;pIni=[e.clientX,e.clientY]}
+  });
+  cv.addEventListener("pointermove",e=>{
+    if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+    if(ptrs.size===2&&pinch){const [[x1,y1],[x2,y2]]=[...ptrs.values()],d=Math.hypot(x2-x1,y2-y1);
+      if(d>4){S.zoomExtra=Math.max(.45,Math.min(1.8,pinch.z*d/pinch.d));ajustarVista()}}
+  });
+  const finPtr=e=>{
+    ptrs.delete(e.pointerId);
+    if(ptrs.size<2&&pinch){guardar("ccl_zoom",String(S.zoomExtra));pinch=null}
+    if(e.type==="pointerup"&&!fuePinch&&ptrs.size===0&&pIni&&Math.hypot(e.clientX-pIni[0],e.clientY-pIni[1])<12)tocar(e);
+    if(ptrs.size===0){pIni=null;fuePinch=false}
+  };
+  cv.addEventListener("pointerup",finPtr);
+  cv.addEventListener("pointercancel",finPtr);
+  cv.addEventListener("wheel",e=>{e.preventDefault();S.zoomExtra=Math.max(.45,Math.min(1.8,S.zoomExtra*(e.deltaY<0?1.12:1/1.12)));guardar("ccl_zoom",String(S.zoomExtra));ajustarVista()},{passive:false});
+  cv.addEventListener("keydown",tecla);
+  document.getElementById("bOfi").onclick=oficinas;
+  document.getElementById("bCaso").onclick=verCaso;
+  document.getElementById("bAlb").onclick=album;
+  document.getElementById("bPista").onclick=pista;
+  document.getElementById("bMan").onclick=manual;
+  document.getElementById("zMas").onclick=()=>{S.zoomExtra=Math.min(1.8,S.zoomExtra*1.2);guardar("ccl_zoom",String(S.zoomExtra));ajustarVista()};
+  document.getElementById("zMenos").onclick=()=>{S.zoomExtra=Math.max(.45,S.zoomExtra/1.2);guardar("ccl_zoom",String(S.zoomExtra));ajustarVista()};
+  document.getElementById("bSalir").onclick=()=>confirmar("¿Salir de este capítulo? Perderá el avance del caso, pero conserva las hojas encontradas.","Salir",portada);
+  bucle();
+  dialogo([["P",CAP[i].intro]],verCaso);
+}
+function ajustarVista(){
+  if(!cv)return;const r=cv.getBoundingClientRect(),dpr=Math.min(3,window.devicePixelRatio||1);
+  vista.w=r.width;vista.h=r.height;vista.dpr=dpr;cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);
+  const base=Math.max(34,Math.min(60,Math.min(r.width/9,r.height/12)));
+  vista.zBase=base*S.zoomExtra/TP;vista.z=vista.zBase;encuadrarCam(1);S.pintado=false;
+}
+function sumar(p){S.pts+=p;const e=document.getElementById("pts");if(e)e.textContent=S.pts;objetivo();if(!p)return;
+  const f=FX[FX.length-1];if(f&&!f.t0)f.p+=p;else FX.push({p,t0:0});neto+=p;
+  if(!bipPend){bipPend=true;Promise.resolve().then(()=>{const ok=neto>=0;neto=0;bipPend=false;try{if(navigator.vibrate)navigator.vibrate(ok?15:[40,40,40])}catch(e){}if(ok)SFX.ok();else SFX.mal()})}}
+function objetivo(){const o=document.getElementById("obj");if(!o||!S.enJuego)return;
+  const ids=Object.keys(MIS[S.m].necesita),c=ids.filter(id=>S.carpeta[id]).length;
+  o.textContent=c<ids.length?`▸ Carpeta ${c}/${ids.length} · luego radicar`:"▸ Carpeta completa: vaya a radicar";
+  o.style.color=c<ids.length?"":"var(--ok)";o.style.fontWeight=c<ids.length?"":"700"}
+function aviso(t){const a=document.getElementById("aviso");if(a)a.textContent=t}
+function pintarCaso(){const n=document.getElementById("nh");if(n)n.textContent=Object.keys(S.hojas).length+"/"+HOJAS.length;objetivo()}
+function verCaso(){
+  const m=MIS[S.m],items=Object.keys(S.carpeta);
+  hoja(`<button class="mini cerrar" data-x>Cerrar</button><div class="caso" style="display:grid;gap:10px"><div class="cab"><span class="canal">${m.canal}</span><span class="de">${esc(m.de)}</span></div><h2>${esc(m.t)}</h2>
+   <div class="npc">${retratoHTML("U")}<div class="globo">${esc(m.msj)}</div></div>
+   <dl class="ficha">${m.ficha.map(f=>`<dt>${f[0]}</dt><dd>${f[1]}</dd>`).join("")}</dl>
+   <div><span class="eti">Su carpeta</span><div class="carpeta" style="margin-top:6px">${items.length?items.map(k=>`<span>${esc(ITEMS[k].n)}</span>`).join(""):"<em>Vacía. Recorra la sede y pida lo que el caso necesita.</em>"}</div></div>
+   <p class="nota">Hojas útiles para este caso: ${CAP[S.m].arts.map(a=>{const h=HOJAS.find(x=>x.a===a);return (h&&h.rot)||"art. "+a}).join(", ")}.</p>
+   <div class="res info"><b>Su tarea</b>Reúna en su carpeta todo lo que el caso exige, en el orden correcto, y radique donde corresponde. Si radica incompleto, se lo devuelven.</div>
+   <button class="btn" data-x>Ir a trabajar</button></div>`);
+}
+function oficinas(){
+  const h=hoja(`<button class="mini cerrar" data-x>Cerrar</button><span class="eti">¿A dónde va?</span><h2>Oficinas de la sede</h2>
+    <div class="oficinas">${ORDEN_SALAS.map(k=>`<button data-s="${k}"><i style="background:${SALAS[k].col}"></i>${esc(SALAS[k].n)}</button>`).join("")}</div>
+    <p class="nota">El personaje camina solo hasta la puerta y entra. También puede tocar el mapa.</p>`);
+  h.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{cerrarHoja(true);irA(b.dataset.s)});
+}
+
+/* ---------- Cámara y movimiento ---------- */
+function aMundo(cx,cy){const z=vista.z;return [(cx-vista.w/2)/z+S.cam.x,(cy-vista.h/2)/z+S.cam.y]}
+function salaDe(x,y){const c=grid[y]&&grid[y][x];return SALAS[c]?c:null}
+function tocar(e){
+  if(S.viendo)return;const r=cv.getBoundingClientRect();const [wx,wy]=aMundo(e.clientX-r.left,e.clientY-r.top);
+  const x=Math.floor(wx/TP),y=Math.floor(wy/TP);if(x<0||y<0||x>=W||y>=H)return;
+  const s=salaDe(x,y);if(s&&!hojaEn(x,y)){irA(s);return}
+  const c=ruta([Math.round(S.px),Math.round(S.py)],[x,y]);if(c&&c.length){S.camino=c;S.dest=null}
+}
+function irA(k){
+  const s=SALAS[k],desde=[Math.round(S.px),Math.round(S.py)];
+  if(desde[0]===s.spot[0]&&desde[1]===s.spot[1]){S.camino=[];S.dest=null;S.px=s.spot[0];S.py=s.spot[1];abrirSala(k);return}
+  const c=ruta(desde,s.spot);if(c&&c.length){S.camino=c;S.dest=k;aviso("Caminando a "+s.n+"…")}
+}
+function tecla(e){
+  if((e.key==="Enter"||e.key===" ")&&!S.camino.length&&!S.viendo){const s0=salaDe(Math.round(S.px),Math.round(S.py));if(s0){e.preventDefault();irA(s0)}return}
+  const d={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]}[e.key.length===1?e.key.toLowerCase():e.key];if(!d)return;
+  e.preventDefault();if(S.camino.length||S.viendo)return;
+  const n=[Math.round(S.px)+d[0],Math.round(S.py)+d[1]];
+  S.dir=d[0]>0?"r":d[0]<0?"l":d[1]>0?"d":"u";
+  if(pisable(n[0],n[1])){S.camino=[n];const s=salaDe(n[0],n[1]);S.dest=(s&&SALAS[s].spot[0]===n[0]&&SALAS[s].spot[1]===n[1])?s:null}
+}
+function hojasNivel(){
+  const m=CAP[S.m]||CAP[0];
+  const delCap=HOJAS.filter(h=>m.arts.includes(h.a)&&!(S.hojas[h.a]>0)&&!(S.rev||{})[h.a]);
+  if(delCap.length>=MAX_HOJAS_NIVEL)return delCap.slice(0,MAX_HOJAS_NIVEL);
+  const extra=HOJAS.filter(h=>!m.arts.includes(h.a)&&!(S.hojas[h.a]>0)&&!(S.rev||{})[h.a]);
+  return delCap.concat(extra).slice(0,MAX_HOJAS_NIVEL);
+}
+function hojaEn(x,y){return hojasNivel().find(h=>h.tile[0]===x&&h.tile[1]===y)}
+function tutObj(){
+  if(!(S.tut>=0&&S.tut<TUT.length))return null;
+  if(!S.viendo){const now=performance.now();
+  while(S.tut<TUT.length&&TUT[S.tut][1](now)){S.tut++;S.tutT=now}}
+  return S.tut<TUT.length?TUT[S.tut][2]:null;
+}
+function encuadrarCam(k){
+  const p=tutObj(),px=S.px*TP+TP/2,py=S.py*TP+TP/2;
+  let zMeta=vista.zBase||vista.z||1,tx=px,ty=py;
+  if(p&&vista.w&&vista.h){
+    const ox=p[0]*TP+TP/2,oy=p[1]*TP+TP/2;
+    tx=(px+ox)/2;ty=(py+oy)/2;
+    const dx=Math.abs(px-ox)+TP*4.2,dy=Math.abs(py-oy)+TP*5.5;
+    const zFit=Math.min(Math.max(120,vista.w-24)/dx,Math.max(120,vista.h-150)/dy);
+    zMeta=Math.min(zMeta,Math.max(.35,zFit));
+  }
+  vista.z=k>=1?zMeta:vista.z+(zMeta-vista.z)*k;
+  const z=vista.z,mw=W*TP,mh=H*TP,hw=vista.w/2/z,hh=vista.h/2/z;
+  tx=mw<=hw*2?mw/2:Math.max(hw,Math.min(mw-hw,tx));
+  ty=mh<=hh*2?mh/2:Math.max(hh-TP*1.2,Math.min(mh-hh+TP*(p?3.6:1.2),ty));
+  S.cam.x=k>=1?tx:S.cam.x+(tx-S.cam.x)*k;
+  S.cam.y=k>=1?ty:S.cam.y+(ty-S.cam.y)*k;
+}
+let ult=0;
+function bucle(t){
+  raf=requestAnimationFrame(bucle);
+  t=t||0;const dt=Math.min(.25,Math.max(0,(t-ult)/1000));ult=t;
+  let v=6*dt;
+  if(S.camino.length&&!S.viendo)S.frame+=dt*9;
+  while(v>0&&S.camino.length&&!S.viendo){
+    const [tx,ty]=S.camino[0],dx=tx-S.px,dy=ty-S.py,dist=Math.hypot(dx,dy);
+    if(Math.abs(dx)>Math.abs(dy))S.dir=dx>0?"r":"l";else if(Math.abs(dy)>.01)S.dir=dy>0?"d":"u";
+    if(dist<=v){v-=dist;S.px=tx;S.py=ty;S.camino.shift();
+      const h=hojaEn(tx,ty); if(h){encontrarHoja(h)}
+      else if(!S.camino.length&&S.dest){const k=S.dest;S.dest=null;abrirSala(k)}}
+    else{S.px+=dx/dist*v;S.py+=dy/dist*v;v=0}
+  }
+  // la cámara sigue al personaje (y al objetivo del tutorial, si aplica) sin salirse del mapa
+  encuadrarCam(Math.min(1,dt*8));
+  if(S.viendo&&S.pintado)return;S.pintado=true;
+  dibujar(t);
+}
+/* ===== efectos: sonido, texto flotante, chispas, luz por sala, tutorial ===== */
+const luzSala={};let tLuz=0;const chispas=[];const FX=[];let vig=null;
+let AC=null,sonido=leer("ccl_sonido")!=="0",neto=0,bipPend=false;
+function nota(fs,dur,tipo,vol){if(!sonido)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();const c=AC.currentTime;
+  fs.forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=tipo||"square";o.frequency.value=f;g.gain.setValueAtTime(vol||.045,c+i*dur);g.gain.exponentialRampToValueAtTime(.001,c+(i+1)*dur+.05);o.connect(g);g.connect(AC.destination);o.start(c+i*dur);o.stop(c+(i+1)*dur+.06)})}catch(e){}}
+const SFX={ok:()=>nota([660,990],.08),mal:()=>nota([220,150],.11,"sawtooth",.04),hoja:()=>nota([784,988,1319],.07,"triangle",.08),sello:()=>nota([523,659,784,1047],.11,"square",.05)};
+function emitir(x,y){const t0=performance.now(),C=["#FFE066","#FFF8E1","#FFFFFF","#FFB347"];
+  for(let i=0;i<18;i++){const a=Math.random()*Math.PI*2,v=(10+Math.random()*22)*K;
+    chispas.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-18*K,t0,vida:500+Math.random()*400,c:C[i%4],s:Math.random()<.4?2:1})}
+  if(chispas.length>160)chispas.splice(0,chispas.length-160)}
+const TUT=[["1/3 · Toque la ficha brillante.",()=>1 in S.hojas,[6,22]],
+ ["2/3 · Toque la puerta de Secretaría CCL.",()=>Object.keys(S.carpeta).length+Object.keys(S.pedidos).length>0,SALAS.P.door],
+ ["3/3 · Abajo: Caso, Oficinas y Pista.",t=>t-S.tutT>9000,null]];
+function tutorial(t){
+  const a=document.getElementById("aviso");
+  if(!(S.tut>=0&&S.tut<TUT.length)||S.viendo){if(a&&S.tut>=TUT.length)a.classList.remove("arriba");return}
+  const [txt,ok,p]=TUT[S.tut];
+  if(ok(t)){S.tut++;S.tutT=t;if(S.tut>=TUT.length){if(a)a.classList.remove("arriba");aviso("Toque una oficina o el piso para caminar.")}return}
+  if(a){
+    if(!S.camino.length&&a.textContent!==txt)aviso(txt);
+    const sy=p?(p[1]*TP+TP/2-S.cam.y)*vista.z+vista.h/2:0;
+    a.classList.toggle("arriba",!!p&&sy>vista.h*.5);
+  }
+  if(p){ctx.strokeStyle="#FFE066";ctx.lineWidth=K;ctx.beginPath();ctx.arc(p[0]*TP+TP/2,p[1]*TP+TP/2,TP*(.6+.1*Math.sin(t/150)),0,7);ctx.stroke()}}
+function dibujar(t){
+  if(!ctx)return;if(!fondo)pintarFondo();const z=vista.z*vista.dpr;
+  ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle="#182030";ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.setTransform(z,0,0,z,cv.width/2-S.cam.x*z,cv.height/2-S.cam.y*z);ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(fondo,0,0);
+  const gente=[];
+  for(const k in SALAS){const s=SALAS[k];gente.push({x:s.npc[0],y:s.npc[1],L:LOOKS[k],d:k==="M"?"l":(s.npc[0]<=2?"r":s.npc[0]>=17?"l":"d"),bob:true})}
+  EXTRA_NPC.forEach(n=>gente.push({x:n.t[0],y:n.t[1],L:n.l,d:n.dir,bob:true}));
+  gente.push({x:S.px,y:S.py,L:S.look,d:S.dir,yo:true});
+  gente.sort((a,b)=>a.y-b.y).forEach((p,i)=>{
+    const fr=p.yo?(S.camino.length?Math.floor(S.frame)%4:0):0,bob=p.bob&&Math.floor(t/600+i)%2?K:0;
+    personaje(ctx,p.x*TP,p.y*TP-K*2-bob,p.L,p.d,fr,K);
+    if(p.yo){ctx.fillStyle="#E80A0A";ctx.beginPath();ctx.moveTo(p.x*TP+TP/2-K*2,p.y*TP-K*5);ctx.lineTo(p.x*TP+TP/2+K*2,p.y*TP-K*5);ctx.lineTo(p.x*TP+TP/2,p.y*TP-K*2);ctx.fill()}
+  });
+  // oficinas en penumbra suave: se ilumina la sala donde está el jugador
+  {
+    const dtL=Math.min(.1,Math.max(0,(t-tLuz)/1000));tLuz=t;
+    const px=Math.round(S.px),py=Math.round(S.py);let dentro=null;
+    for(const k in SALAS){const s=SALAS[k];
+      if((px>=s.x[0]&&px<=s.x[1]&&py>=s.y[0]&&py<=s.y[1])||(px===s.door[0]&&py===s.door[1]))dentro=k}
+    for(const k in SALAS){const s=SALAS[k],meta=dentro===null?.07:(k===dentro?0:.20);
+      let a=luzSala[k];if(a===undefined)a=meta;a+=(meta-a)*Math.min(1,dtL*5);luzSala[k]=a;
+      if(a<.01)continue;
+      const y0=(s.y[0]-1)*TP+6*K;
+      ctx.fillStyle="rgba(15,23,42,"+a.toFixed(3)+")";
+      ctx.fillRect(s.x[0]*TP,y0,(s.x[1]-s.x[0]+1)*TP,(s.y[1]+1)*TP-y0);
+    }
+  }
+  // hojas del manual (encima de la penumbra, para que brillen)
+  hojasNivel().forEach((h,i)=>{const X=h.tile[0]*TP,Y=h.tile[1]*TP,b=Math.sin(t/300+i)*K*1.5;
+    const gl=ctx.createRadialGradient(X+TP/2,Y+TP/2,0,X+TP/2,Y+TP/2,TP*.7);gl.addColorStop(0,"rgba(255,224,102,.45)");gl.addColorStop(1,"rgba(255,224,102,0)");ctx.fillStyle=gl;ctx.fillRect(X-TP*.2,Y-TP*.2,TP*1.4,TP*1.4);
+    ctx.fillStyle="rgba(0,0,0,.18)";ctx.beginPath();ctx.ellipse(X+TP/2,Y+TP*.85,TP*.25,TP*.07,0,0,7);ctx.fill();
+    ctx.save();ctx.translate(X+TP/2,Y+TP/2+b-K*2);ctx.rotate(Math.sin(t/500+i)*.15);
+    ctx.fillStyle="#FFF8E1";ctx.fillRect(-5*K,-6*K,10*K,12*K);ctx.fillStyle=(h.a in S.hojas)?"#223D8A":"#E80A0A";ctx.fillRect(-5*K,-6*K,10*K,2*K);ctx.fillStyle="#B9A97A";[-2,1,4].forEach(r=>ctx.fillRect(-3*K,r*K,6*K,K));ctx.restore();
+    const s=(t/180+i*1.7)%6;if(s<2){ctx.fillStyle="#FFE066";const a=s*Math.PI;ctx.fillRect(X+TP/2+Math.cos(a)*TP*.38-K,Y+TP*.3+Math.sin(a)*TP*.2-K,2*K,2*K)}});
+  if(S.hint){const s=SALAS[S.hint],b=Math.sin(t/200)*K*1.5,X=s.npc[0]*TP+TP/2,Y=s.npc[1]*TP-K*6+b;
+    ctx.fillStyle="#fff";ctx.fillRect(X-5*K,Y-6*K,10*K,10*K);ctx.fillStyle="#E80A0A";ctx.fillRect(X-4*K,Y-5*K,8*K,8*K);ctx.fillStyle="#fff";ctx.fillRect(X-K,Y-4*K,2*K,4*K);ctx.fillRect(X-K,Y+K,2*K,K)}
+  if(S.camino.length){const d=S.camino[S.camino.length-1];ctx.strokeStyle="#E80A0A";ctx.lineWidth=K;ctx.setLineDash([2*K,2*K]);ctx.strokeRect(d[0]*TP+2*K,d[1]*TP+2*K,TP-4*K,TP-4*K);ctx.setLineDash([])}
+  // chispas
+  if(chispas.length){ctx.save();
+    for(let i=chispas.length-1;i>=0;i--){const c=chispas[i],e=Math.max(0,t-c.t0);
+      if(e>c.vida){chispas.splice(i,1);continue}
+      const sg=e/1000,u=e/c.vida,sz=K*(c.s+(u<.5?1:0));
+      ctx.globalAlpha=1-u*u;ctx.fillStyle=c.c;
+      ctx.fillRect(Math.round((c.x+c.vx*sg)/K)*K,Math.round((c.y+c.vy*sg+40*K*sg*sg)/K)*K,sz,sz)}
+    ctx.restore()}
+  // texto flotante con los puntos ganados o perdidos
+  if(FX.length){ctx.save();
+    ctx.font=`700 ${Math.round(TP*.46)}px "Pixelify Sans","JetBrains Mono",monospace`;
+    ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineJoin="round";ctx.lineWidth=K*2;ctx.strokeStyle="#1a1830";
+    const bx=S.px*TP+TP/2,by=S.py*TP-K*9;
+    for(let i=FX.length-1;i>=0;i--){const f=FX[i];if(!f.p){FX.splice(i,1);continue}
+      if(!f.t0){if(S.viendo)continue;f.t0=t}
+      const e=t-f.t0;if(e>1500){FX.splice(i,1);continue}
+      const u=e/1500,y=by-K*18*(1-(1-u)*(1-u)),tx=(f.p>0?"+":"−")+Math.abs(f.p);
+      ctx.globalAlpha=u<.6?1:1-(u-.6)/.4;
+      ctx.strokeText(tx,bx,y);ctx.fillStyle=f.p>0?"#8CFFB0":"#FF8A8A";ctx.fillText(tx,bx,y)}
+    ctx.restore()}
+  tutorial(t);
+  // en coordenadas de pantalla: viñeta y flecha hacia la pista
+  ctx.setTransform(1,0,0,1,0,0);
+  {const cw=cv.width,ch=cv.height;
+    if(!vig||vig.c!==ctx||vig.w!==cw||vig.h!==ch){const r=Math.hypot(cw,ch)/2,gv=ctx.createRadialGradient(cw/2,ch/2,r*.5,cw/2,ch/2,r);
+      gv.addColorStop(0,"rgba(5,8,24,0)");gv.addColorStop(.65,"rgba(5,8,24,.16)");gv.addColorStop(1,"rgba(5,8,24,.5)");vig={c:ctx,w:cw,h:ch,g:gv}}
+    ctx.fillStyle=vig.g;ctx.fillRect(0,0,cw,ch)}
+  const pTut=(S.tut>=0&&S.tut<TUT.length)?TUT[S.tut][2]:null,pFlecha=S.hint?SALAS[S.hint].door:pTut;
+  if(pFlecha&&!S.viendo){const d=vista.dpr,sx=(pFlecha[0]*TP+TP/2-S.cam.x)*z+cv.width/2,sy=(pFlecha[1]*TP+TP/2-S.cam.y)*z+cv.height/2;
+    const x0=30*d,x1=cv.width-30*d,y0=95*d,y1=cv.height-150*d;
+    if(sx<x0||sx>x1||sy<y0||sy>y1){const px=Math.max(x0,Math.min(x1,sx)),py=Math.max(y0,Math.min(y1,sy)),r=14*d*(1+.15*Math.sin(t/150));
+      ctx.setTransform(1,0,0,1,px,py);ctx.rotate(Math.atan2(sy-py,sx-px));ctx.fillStyle=S.hint?"#E80A0A":"#FFE066";ctx.strokeStyle=S.hint?"#fff":"#1a1830";ctx.lineWidth=3*d;
+      ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(-r*.8,-r*.8);ctx.lineTo(-r*.3,0);ctx.lineTo(-r*.8,r*.8);ctx.closePath();ctx.fill();ctx.stroke();ctx.setTransform(1,0,0,1,0,0)}}
+}
+
+/* ---------- Hojas del manual ---------- */
+function puntosHojas(){return Object.values(S.hojas).reduce((a,v)=>a+(v===1?40:v===2?30:10),0)}
+function encontrarHoja(h){
+  const repaso=h.a in S.hojas;if(repaso)(S.rev=S.rev||{})[h.a]=1;SFX.hoja();
+  const util=S.enJuego&&CAP[S.m]&&CAP[S.m].arts.includes(h.a);
+  const ords=barajar([...h.o.keys()]);
+  const hh=hoja(`<span class="eti">${repaso?"Segunda oportunidad: si acierta, +30":"¡Encontró una hoja del manual!"}</span>
+    <div class="pagina"><span class="art">${esc(h.rot||"Art. "+h.a)}</span><h3>${esc(h.t)}</h3><p style="margin:0">${esc(h.txt)}</p>${util?`<span class="nota"><b>Esta hoja sirve para su caso actual.</b></span>`:""}</div>
+    <span class="eti">Pregunta relámpago (+${repaso?30:40})</span><b>${esc(h.q)}</b>
+    <div class="pedidos">${ords.map(k=>`<button class="ped" data-k="${k}">${esc(h.o[k][0])}</button>`).join("")}</div><div id="resp"></div>`,()=>{pintarCaso();if(S.hojas[h.a]>0)emitir(S.px*TP+TP/2,S.py*TP+TP/2);
+      if(!S.camino.length&&S.dest){const k=S.dest;S.dest=null;abrirSala(k)}});
+  hh.querySelectorAll(".ped").forEach(b=>b.onclick=()=>{
+    const ok=!!h.o[+b.dataset.k][1];
+    hh.querySelectorAll(".ped").forEach(x=>{x.disabled=true;if(h.o[+x.dataset.k][1])x.classList.add("hecho")});
+    S.hojas[h.a]=ok?(repaso?2:1):0;guardar("ccl_hojas",JSON.stringify(S.hojas));publicar();
+    responder(hh,ok?"bien":"malo",ok?"¡Correcto! +"+(repaso?30:40)+" al registro de participantes.":(repaso?"Todavía no. Volverá a aparecer en otro capítulo.":"No era esa. +10 por encontrarla. Volverá a aparecer en otro capítulo."),"Respuesta: "+h.o.find(o=>o[1])[0]+".","Resolución 3461 de 2025, "+(h.rot||"art. "+h.a));
+    const bg=el(`<button class="btn" data-x style="margin-top:8px">Guardar en mi manual</button>`);
+    hh.querySelector("#resp").append(bg);bg.onclick=()=>cerrarHoja();bg.scrollIntoView({block:"nearest"});
+    if(Object.values(S.hojas).filter(v=>v>0).length===HOJAS.length)aviso("¡Manual completo! Las "+HOJAS.length+" hojas están de vuelta.");
+  });
+  aviso("Hoja del manual: "+(h.rot||"art. "+h.a));
+}
+function album(){
+  const nh=Object.keys(S.hojas).length;
+  const h=hoja(`<button class="mini cerrar" data-x>Cerrar</button><span class="eti">Manual coleccionable</span><h2>${nh} de ${HOJAS.length} hojas</h2>
+    <p class="nota">Las hojas están en el piso de la sede: pasillos y oficinas. Camine sobre ellas para recogerlas.</p>
+    <div class="album">${HOJAS.map(x=>{const ok=x.a in S.hojas;return `<button class="carta ${ok?"ok":""}" data-a="${x.a}" ${ok?"":"disabled"}><b>${ok?x.a:"?"}</b>${ok?esc(x.t):"Por encontrar"}</button>`}).join("")}</div><div id="det"></div>`);
+  h.querySelectorAll(".carta.ok").forEach(b=>b.onclick=()=>{const x=HOJAS.find(y=>y.a==b.dataset.a);
+    h.querySelector("#det").innerHTML=`<div class="pagina"><span class="art">${esc(x.rot||"Art. "+x.a)}</span><h3>${esc(x.t)}</h3><p style="margin:0">${esc(x.txt)}</p><span class="nota">${S.hojas[x.a]?"Pregunta respondida bien.":"Pregunta respondida mal."}</span></div>`;
+    h.querySelector("#det").scrollIntoView({block:"nearest",behavior:"smooth"})});
+}
+
+/* ---------- Hojas emergentes ---------- */
+let hojaActual=null;
+function hoja(html,alCerrar){
+  cerrarHoja(true);S.viendo=true;
+  const v=el(`<div class="velo" role="dialog" aria-modal="true"><div class="hoja">${html}</div></div>`);
+  document.body.append(v);document.body.classList.add("velo-abierto");hojaActual={v,alCerrar};pintarRetratos(v);
+  v.querySelectorAll("canvas.interior").forEach(c=>pintarInterior(c,c.dataset.sala));
+  v.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>cerrarHoja());
+  v.onclick=e=>{if(e.target===v&&hojaActual&&!hojaActual.fijo)cerrarHoja()};
+  const f=v.querySelector(".ped:not([disabled]), .tipo, .btn:not(.sec), button:not([disabled]):not(.cerrar)")||v.querySelector("button:not([disabled])");if(f)f.focus({preventScroll:true});
+  return v.firstElementChild;
+}
+function cerrarHoja(silencio){
+  if(!hojaActual)return;const h=hojaActual;hojaActual=null;h.v.remove();S.viendo=false;S.pintado=false;
+  if(!silencio&&h.alCerrar)h.alCerrar();
+  if(!hojaActual){document.querySelectorAll(".velo").forEach(x=>x.remove());document.body.classList.remove("velo-abierto");if(S.enJuego){encuadrarCam(1);if(cv)cv.focus({preventScroll:true})}}
+  pintarCaso();
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&hojaActual&&!hojaActual.fijo)cerrarHoja()});
+function confirmar(txt,ok,fn){const h=hoja(`<h2>${esc(txt)}</h2><div style="display:grid;gap:8px"><button class="btn" id="cfOk">${esc(ok)}</button><button class="btn sec" data-x>Cancelar</button></div>`);h.querySelector("#cfOk").onclick=()=>{cerrarHoja(true);fn()}}
+function responder(h,cls,tit,txt,cita){const r=h.querySelector("#resp");r.innerHTML=`<div class="res ${cls}"><b>${esc(tit)}</b>${esc(txt)}${cita?`<span class="cita">${esc(cita)}</span>`:""}</div>`;r.scrollIntoView({block:"nearest",behavior:"smooth"})}
+
+/* ---------- Oficinas por dentro ---------- */
+function faltaPre(m,id){return (m.pre[id]||[]).filter(p=>!S.carpeta[p])}
+function abrirSala(k){
+  const m=MIS[S.m],s=SALAS[k];if(S.hint===k)S.hint=null;
+  const ofrece=Object.keys(ITEMS).filter(id=>ITEMS[id].sala===k);
+  const h=hoja(`<button class="mini cerrar" data-x>Salir</button>
+    <div class="cab-sala"><span class="eti"><i style="background:${s.col}"></i>Oficina</span><h2>${esc(s.n)}</h2></div>
+    <canvas class="interior" data-sala="${k}" width="640" height="280" aria-hidden="true"></canvas>
+    <div class="npc">${retratoHTML(k)}<div class="globo"><b class="quien">${esc(k==="M"?"Beatriz Taborda, Diana Melo y Andreina · Comité":k==="F"?"Yazmín Lizarazo y Tutor de Talento Humano":ROL[k])}</b>${esc(SALUDO[k])}</div></div>
+    <span class="eti">Qué puede gestionar aquí</span>
+    <div class="pedidos">${k==="U"?`<button class="ped" data-caso><span>Releer el caso</span><small>CASO</small></button>`:""}${ofrece.map(id=>{const it=ITEMS[id],hecho=S.carpeta[id];
+      return `<button class="ped ${hecho?"hecho":""} ${it.tipo==="radicar"?"accion":""}" data-id="${id}"><span>${esc(it.n)}</span><small>${hecho?"EN CARPETA":it.tipo==="radicar"?"RADICAR":"PEDIR"}</small></button>`}).join("")}</div>
+    <div id="resp"></div><button class="btn sec" data-x>Salir al pasillo</button>`);
+  aviso("Está en "+s.n+".");
+  const cc=h.querySelector("[data-caso]");if(cc)cc.onclick=verCaso;
+  h.querySelectorAll(".ped[data-id]").forEach(b=>b.onclick=()=>pedir(b.dataset.id,h,b));
+}
+function pedir(id,h,b){
+  const m=MIS[S.m],it=ITEMS[id];
+  if(it.tipo==="radicar"){radicar(it.sala);return}
+  if(S.carpeta[id]){responder(h,"info","Ya está en su carpeta.",m.necesita[id]||"");return}
+  if(!(id in m.necesita)){
+    if(m.neutro.includes(id)){responder(h,"info","No es el paso clave aquí.","Puede hacerse por debida diligencia, pero no es lo que decide este caso. No suma ni resta.",it.c);return}
+    const txt=(m.noOverride&&m.noOverride[id])||it.no;
+    if(!S.pedidos[id]){S.pedidos[id]=1;sumar(-30);S.log.push([0,"Pidió algo que no aplica: "+it.n,txt,it.c])}
+    responder(h,"malo","Esto no aplica en este caso (−30).",txt,it.c);return;
+  }
+  const falta=faltaPre(m,id);
+  if(falta.length){if(!S.pedidos["pre_"+id]){S.pedidos["pre_"+id]=1;sumar(-10)}
+    responder(h,"malo","Todavía no (−10).","Primero necesito: "+falta.map(f=>ITEMS[f].n).join(", ")+". Vaya a "+falta.map(f=>SALAS[ITEMS[f].sala].n).join(" y ")+".",it.c);return}
+  if(it.tipo==="docs"){revisarDocs(h);return}
+  S.carpeta[id]=1;sumar(50);S.log.push([1,it.n,m.necesita[id],it.c]);
+  b.classList.add("hecho");b.querySelector("small").textContent="EN CARPETA";
+  responder(h,"bien","Listo, a su carpeta (+50).",m.necesita[id],it.c);
+}
+function revisarDocs(h){
+  const m=MIS[S.m],caja=h.querySelector("#resp");
+  caja.innerHTML=`<div class="res info"><b>Revise cada documento antes de recibirlo.</b>¿Sirve o lo devuelve?</div><div class="docs" style="margin-top:8px">${m.docs.map((d,k)=>`
+    <div class="doc" id="d${k}"><div><div class="n">${esc(d[0])}</div><div class="d">${esc(d[1])}</div></div>
+    <div class="acc"><button class="si" data-k="${k}" data-v="1" aria-pressed="false">Sirve</button><button class="no" data-k="${k}" data-v="0" aria-pressed="false">Devolver</button></div></div>`).join("")}</div>
+    <button class="btn" id="rev" style="margin-top:8px" disabled>Recibir documentos</button>`;
+  caja.scrollIntoView({block:"nearest"});
+  const sel={};
+  caja.querySelectorAll(".acc button").forEach(b=>b.onclick=()=>{sel[b.dataset.k]=+b.dataset.v;b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));caja.querySelector("#rev").disabled=Object.keys(sel).length<m.docs.length});
+  caja.querySelector("#rev").onclick=()=>{let malos=0;
+    m.docs.forEach((d,k)=>{const bien=sel[k]===d[2],box=caja.querySelector("#d"+k);box.classList.add(bien?"bien":"malo");box.querySelector(".acc").remove();
+      box.append(el(`<div style="font-size:13px"><b>${bien?"Bien":"Ojo"}:</b> ${d[2]?"sirve":"se devuelve"}. ${esc(d[3])}</div>`));
+      if(bien)sumar(25);else{malos++;sumar(-25);S.log.push([0,d[0],d[3],ITEMS.docs.c])}});
+    S.carpeta.docs=1;caja.querySelector("#rev").remove();
+    caja.append(el(`<div class="res ${malos?"malo":"bien"}" style="margin-top:8px"><b>${malos?"Recibió con "+malos+" error(es).":"Revisión perfecta."}</b>Se subsanaron los soportes bajo reserva. Los documentos quedan en su carpeta.<span class="cita">Resolución 3461 de 2025, art. 65; anexos del formato</span></div>`));
+    const btn=h.querySelector('.ped[data-id="docs"]');if(btn){btn.classList.add("hecho");btn.querySelector("small").textContent="EN CARPETA"}};
+}
+function pista(){
+  const m=MIS[S.m],pend=Object.keys(m.necesita).filter(id=>!S.carpeta[id]),sig=pend.find(id=>!faltaPre(m,id).length);
+  const gratis=!S.ayudas,cab=gratis?"Pista gratis (la primera del capítulo)":"Pista (−50)";if(!gratis)sumar(-50);S.ayudas++;
+  if(!sig){S.hint=m.destino;hoja(`<span class="eti">${cab}</span><div class="npc">${retratoHTML("BS")}<div class="globo"><b class="quien">Beatriz Taborda</b>Ya tiene todo. Vaya a radicar a ${esc(SALAS[m.destino].n)}.</div></div><button class="btn" data-x>Entendido</button>`);return}
+  const sala=ITEMS[sig].sala;S.hint=sala;
+  hoja(`<span class="eti">${cab}</span><div class="npc">${retratoHTML("BS")}<div class="globo"><b class="quien">Beatriz Taborda</b>Vaya a ${esc(SALAS[sala].n)}: allí está lo que sigue en su ruta. Le dejé un aviso rojo en el mapa. Le faltan ${pend.length} soporte(s).</div></div><button class="btn" data-x>Entendido</button>`);
+}
+
+/* ---------- Radicación ---------- */
+function radicar(sala){
+  const m=MIS[S.m];
+  if(sala!==m.destino){sumar(-50);S.devol++;
+    const txt=m.destino==="F"?"Cuando el caso corresponde a una situación operativa puntual y no a un conflicto de convivencia competencia del CCL, se orienta preventivamente hacia Talento Humano y SST.":"Esta oficina no corresponde al cierre o canalización final de este expediente. Verifique si debe cerrar en Presidencia CCL o canalizar en Talento Humano y SST.";
+    S.log.push([0,"Radicó en la oficina equivocada",txt,"Resolución 3461 de 2025 · Procedimiento CCL"]);
+    hoja(`<span class="sello mal">DEVUELTO</span><h2>Oficina equivocada (−50)</h2><p>${esc(txt)}</p><span class="cita">Resolución 3461 de 2025 · Procedimiento CCL</span><button class="btn" data-x>Volver</button>`);return}
+  const falta=Object.keys(m.necesita).filter(id=>!S.carpeta[id]);
+  if(falta.length){sumar(-100);S.devol++;S.log.push([0,"Radicó incompleto","Faltaba: "+falta.map(f=>ITEMS[f].n).join(", ")+".",""]);
+    hoja(`<span class="sello mal">DEVUELTO</span><h2>Radicó incompleto (−100)</h2><p>Si faltan pasos o soportes del debido proceso, el expediente no puede cerrarse ni canalizarse. Le faltan ${falta.length} soporte(s):</p>
+      <ul class="lista">${falta.map(f=>`<li><span class="m no">✗</span><span>${esc(ITEMS[f].n)}</span></li>`).join("")}</ul><p class="nota">Pista: ${esc(SALAS[ITEMS[falta[0]].sala].n)} tiene uno de ellos.</p><button class="btn" data-x>Volver a la sede</button>`);return}
+  elegirFormato();
+}
+function elegirFormato(){
+  const m=MIS[S.m];
+  const h=hoja(`<span class="eti">Carpeta completa · ${esc(SALAS[m.destino].n)}</span><h2>¿Qué formato diligencia?</h2>
+    <div class="tipos">${barajar(Object.keys(FORMATOS)).map(k=>`<button class="tipo" data-f="${k}"><b>${FORMATOS[k].c}</b><span>${esc(FORMATOS[k].n)}</span></button>`).join("")}</div><div id="resp"></div><button class="btn sec" data-x>Volver a la sede</button>`);
+  h.querySelectorAll(".tipo").forEach(b=>b.onclick=()=>{
+    if(b.dataset.f===m.formato){formulario();return}
+    if(!S.pedidos["f_"+b.dataset.f]){S.pedidos["f_"+b.dataset.f]=1;sumar(-50);S.log.push([0,"Formato equivocado: "+FORMATOS[b.dataset.f].c,"El caso pedía "+FORMATOS[m.formato].c+".",""])}
+    b.disabled=true;b.style.opacity=.5;
+    const p={ACTA_CONC:"El CCL-FM-01 se utiliza cuando hubo espacio de diálogo y se formalizan compromisos y plan de mejora concertado.",ACTA_SEG:"El CCL-FM-02 corresponde a las actas posteriores de seguimiento mensual de compromisos.",INF_AD:"El CCL-FM-03 corresponde al informe de recomendaciones y cierre dirigido a Alta Dirección.",ORIENT_TH:"El CCL-FM-04 aplica para constancias de no competencia y orientación preventiva en Talento Humano y SST."}[b.dataset.f];
+    responder(h,"malo","Ese formato no corresponde (−50).",p,"Resolución 3461 de 2025 · Procedimiento CCL")});
+}
+function formulario(){
+  const m=MIS[S.m],F=FORMATOS[m.formato],resp={},ords=m.campos.map(c=>barajar([...c.o.keys()]));
+  const h=hoja(`<span class="eti">Diligencie y firme</span><h2>${F.c}</h2>
+    <div class="formato"><div class="enc"><b>${esc(F.n)}</b><span>Código: ${F.c}<br>${F.v}</span></div>
+    ${m.campos.map((c,i)=>`<div class="fila" id="f${i}"><span class="lab">${esc(c.k)}</span><span class="q">${esc(c.q)}</span><button class="val" data-i="${i}">Toque para diligenciar</button></div>`).join("")}</div>
+    <button class="btn" id="firmar" disabled>Firmar y radicar</button>`);
+  h.querySelectorAll(".val").forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i,c=m.campos[i];const prev=b.parentElement.querySelector(".pedidos");if(prev){prev.remove();return}
+    h.querySelectorAll(".fila .pedidos").forEach(x=>x.remove());
+    const sub=el(`<div class="pedidos" style="margin-top:4px">${ords[i].map(k=>`<button class="ped" data-k="${k}">${esc(c.o[k][0])}</button>`).join("")}</div>`);b.after(sub);
+    sub.scrollIntoView({block:"nearest"});
+    sub.querySelectorAll(".ped").forEach(o=>o.onclick=()=>{resp[i]=+o.dataset.k;b.textContent=c.o[resp[i]][0];b.classList.add("lleno");sub.remove();b.focus({preventScroll:true});h.querySelector("#firmar").disabled=Object.keys(resp).length<m.campos.length})});
+  h.querySelector("#firmar").onclick=()=>{hojaActual.fijo=true;let err=0;
+    m.campos.forEach((c,i)=>{const ok=!!c.o[resp[i]][1],f=h.querySelector("#f"+i);f.classList.add(ok?"bien":"malo");f.querySelector(".val").disabled=true;
+      f.append(el(`<div class="res ${ok?"bien":"malo"}" style="margin-top:4px">${ok?"":`<b>Correcto: ${esc(c.o.find(o=>o[1])[0])}</b>`}${esc(c.p)}<span class="cita">${esc(c.c)}</span></div>`));
+      if(ok){sumar(100);S.campOk++}else{err++;sumar(-50);S.log.push([0,c.k+": "+c.q,c.p,c.c])}});
+    S.formErr=err;const fb=h.querySelector("#firmar");fb.textContent="Ver el concepto del Comité";fb.onclick=resultado;fb.scrollIntoView({block:"nearest"})};
+}
+function maxPts(m){return 50*Object.keys(m.necesita).filter(k=>k!=="docs").length+25*m.docs.length+100*m.campos.length+200}
+function estrellas(i){const p=S.best[i];if(p==null)return 0;const r=p/maxPts(MIS[i]);return r>=.9?3:r>=.65?2:1}
+function resultado(){
+  const m=MIS[S.m];const limpio=!S.devol&&!S.formErr&&S.ayudas<2&&!S.log.some(l=>!l[0])&&!Object.keys(S.pedidos).length;if(limpio){sumar(200);SFX.sello()}
+  const pts=Math.max(0,S.pts),prev=S.best[S.m];if(prev==null||pts>prev){S.best[S.m]=pts;guardar("ccl_best",JSON.stringify(S.best))}
+  const errores=S.log.filter(l=>!l[0]);
+  const h=hoja(`<span class="eti">Revisión del Comité · ${FORMATOS[m.formato].c}</span>
+    <span class="sello ${limpio?"ok":"mal"}">${limpio?"RADICADO":"CON OBSERVACIONES"}</span>
+    <h2>${pts} puntos${limpio?" (incluye +200 por radicar limpio)":""}</h2><span class="estrellas">${"★".repeat(estrellas(S.m))}${"☆".repeat(3-estrellas(S.m))}</span>
+    <p class="nota">Devoluciones: ${S.devol} · Campos bien: ${S.campOk} de ${m.campos.length} · Pistas: ${S.ayudas}</p>
+    <div class="npc">${retratoHTML("C")}<div class="globo"><b class="quien">Alexandra Neira · Presidenta CCL</b>${esc(m.leccion)}</div></div>
+    ${errores.length?`<span class="eti">Para repasar</span><ul class="lista">${errores.map(e=>`<li><span class="m no">✗</span><span><b>${esc(e[1])}.</b> ${esc(e[2])}${e[3]?`<span class="cita">${esc(e[3])}</span>`:""}</span></li>`).join("")}</ul>`:""}
+    <span class="eti">La ruta correcta</span>
+    <ul class="lista">${Object.keys(m.necesita).map(id=>`<li><span class="m ok">✓</span><span><b>${esc(SALAS[ITEMS[id].sala].corto)}:</b> ${esc(ITEMS[id].n)}</span></li>`).join("")}<li><span class="m ok">✓</span><span><b>${esc(SALAS[m.destino].corto)}:</b> radicar el ${FORMATOS[m.formato].c}</span></li></ul>
+    <div style="display:grid;gap:8px">${S.m+1<MIS.length?`<button class="btn" id="sig">Siguiente capítulo</button>`:""}<button class="btn sec" id="men">Volver al inicio</button></div>`,portada);
+  const sg=h.querySelector("#sig");if(sg)sg.onclick=()=>{cerrarHoja(true);salirDelJuego();iniciar(S.m+1)};
+  h.querySelector("#men").onclick=()=>cerrarHoja();
+  publicar();
+}
+
+/* ---------- Final: auditoría ---------- */
+function auditoria(){
+  const nh=Object.keys(S.hojas).length,est=MIS.reduce((a,_,i)=>a+estrellas(i),0);
+  const nota=est>=13&&nh===HOJAS.length?"Impecable. Las cinco carpetas están completas y el manual volvió entero. El cierre institucional no tiene observaciones.":est>=10?"Buen trabajo. Hay detalles por pulir en algunos expedientes, pero el debido proceso se sostiene.":"Los expedientes llegaron, pero con observaciones. Repase los capítulos con menos estrellas antes de la próxima sesión.";
+  portadaVacia();
+  dialogo([["C","Cierre del ciclo de capacitación. El Comité revisó las carpetas de los cinco casos de convivencia laboral atendidos."],["BS","Obtuvieron "+est+" de 15 estrellas posibles y "+nh+" de "+HOJAS.length+" fichas de la guía recuperadas."],["C",nota],["R","Gracias, {n}. Ahora conoce el rol preventivo y conciliador del Comité de Convivencia Laboral y cómo cuidar el bienestar de toda la comunidad Uniempresarial."]],portada);
+}
+
+/* ---------- Cierre: lo que aprendí hoy ---------- */
+function resumen(){const li=(m,t)=>`<li><span class="m ${m==="✓"?"ok":"no"}">${m}</span><span>${t}</span></li>`;
+  const casos=MIS.map((m,i)=>S.best[i]!=null?li("✓",`<b>${esc(m.t)}.</b> ${esc(m.leccion)}`):"").join("");
+  const bien=HOJAS.filter(h=>S.hojas[h.a]>0).map(h=>li("✓",`<b>${esc(h.rot||"Art. "+h.a)} · ${esc(h.t)}.</b> ${esc(h.txt)}`)).join("");
+  const mal=HOJAS.filter(h=>S.hojas[h.a]===0).map(h=>li("↻",`<b>${esc(h.rot||"Art. "+h.a)} · ${esc(h.t)}.</b> ${esc(h.txt)}`)).join("");
+  hoja(`<button class="mini cerrar" data-x>Cerrar</button><span class="eti">Cierre de la capacitación</span><h2>Lo que aprendí hoy</h2>
+   <p class="nota">${Object.keys(S.best).length}/${MIS.length} casos · ${Object.values(S.hojas).filter(v=>v>0).length}/${HOJAS.length} preguntas bien · ${totalRk()} pts</p>
+   ${casos?`<span class="eti">Reglas de los casos que resolvió</span><ul class="lista">${casos}</ul>`:`<p>Aún no ha resuelto ningún caso. Elija un capítulo para empezar.</p>`}
+   ${mal?`<span class="eti">Para repasar</span><ul class="lista">${mal}</ul>`:""}${bien?`<span class="eti">Artículos que ya domina</span><ul class="lista">${bien}</ul>`:""}<button class="btn" data-x>Entendido</button>`)}
+
+/* ---------- Manual de bolsillo ---------- */
+function manual(){
+  hoja(`<div class="manual" style="display:flex;flex-direction:column;gap:6px"><button class="mini cerrar" data-x>Cerrar</button>
+    <span class="eti">Manual de bolsillo</span><h2>Guía rápida · Resolución 3461 de 2025</h2>
+    <h3>Naturaleza y principios del CCL</h3>
+    <ul><li>Rol <b>preventivo, orientador, conciliador y canalizador</b>.</li><li><b>No</b> emite fallos disciplinarios ni impone sanciones.</li><li>Funciona bajo acuerdos de <b>confidencialidad, eficacia e imparcialidad</b>.</li><li>Conformación paritaria (2026–2028): 2 representantes de trabajadores y 2 del empleador, con suplentes. Reuniones mensuales o extraordinarias.</li><li>Canal oficial: <b>comiteconvivencia@uniempresarial.edu.co</b>.</li></ul>
+    <h3>Procedimiento y plazos (Máx. 65 días calendario)</h3>
+    <table>
+      <tr><td>1. Recepción</td><td>Máx. 5 días · Secretaría del Comité verifica competencia.</td></tr>
+      <tr><td>2. Análisis confidencial</td><td>5 días (+10 justificados, máx. 15) · El CCL examina reservadamente.</td></tr>
+      <tr><td>3. Escucha individual</td><td>5 días · Escucha por separado con confidencialidad y debido proceso.</td></tr>
+      <tr><td>4. Diálogo y mejora</td><td>5 días (+10 justificados, máx. 15) · Acuerdos y plan de mejora concertado.</td></tr>
+      <tr><td>5. Recomendaciones</td><td>5 a 10 días · Se presentan a Alta Dirección con copia al trabajador; Talento Humano y SST aplican medidas.</td></tr>
+      <tr><td>6. Seguimiento y cierre</td><td>Seguimiento mensual. Cierre: máx. 15 días. Si no hay acuerdo o persiste, se informa a Alta Dirección y se cierra.</td></tr>
+    </table>
+    <p class="nota">Los plazos no son acumulativos y el seguimiento mensual no cuenta dentro del límite de 65 días calendario.</p>
+    <h3>Alcance preventivo y casos operativos</h3>
+    <ul><li><b>Conflictos operativos puntuales o instrucciones laborales respetuosas:</b> no constituyen un conflicto de convivencia competencia del CCL; el Comité orienta y canaliza hacia <b>Talento Humano y SST</b> para acciones preventivas de clima.</li><li><b>Situaciones de convivencia laboral recurrentes:</b> se tramitan respetando el debido proceso, la escucha individual previa y el límite máximo de 65 días calendario.</li></ul>
+    <h3>Motivos frecuentes de devolución</h3>
+    <ul><li>Queja anónima sin hechos verificables o sin firma de acuerdo de confidencialidad.</li><li>Citar a las dos partes juntas antes de realizar la escucha individual.</li><li>Superar los 65 días calendario sin justificación o cerrar sin seguimiento.</li></ul></div>`);
+}
+
+/* ---------- Registro de participantes ---------- */
+let DB=null,UID=null,unsub=null,ultPub=0,colaPub=0,ultFirma="";
+const listo=(async()=>{try{if(!window.claude||!window.claude.use)return false;
+  const [db,user]=await Promise.all([window.claude.use("db"),window.claude.use("user")]);if(!db||!user)return false;const id=await user.id();if(!id)return false;DB=db;UID=id;return true}catch(e){return false}})();
+function totalRk(){return Object.values(S.best).reduce((a,b)=>a+b,0)+puntosHojas()}
+function miPid(){let id=leer("ccl_pid");if(!id){id="p_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,10);guardar("ccl_pid",id)}return id}
+function fechaIngreso(){let f=leer("ccl_ingreso");if(!f){f=new Date().toISOString();guardar("ccl_ingreso",f)}return f}
+function conTiempo(p,ms){let t;const lim=new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error("timeout")),ms)});return Promise.race([p,lim]).finally(()=>clearTimeout(t))}
+function publicar(){
+  const al=((S.look&&S.look.nombre)||leer("ccl_alias")||"Colaborador").trim().slice(0,40)||"Colaborador",tot=totalRk(),casos=Object.keys(S.best).length,hojas=Object.keys(S.hojas).length;
+  const firma=JSON.stringify([al,tot,casos,hojas]);
+  if(firma===ultFirma)return;
+  const esp=5000-(Date.now()-ultPub);
+  if(esp>0){if(!colaPub)colaPub=setTimeout(()=>{colaPub=0;publicar()},esp);return}
+  ultPub=Date.now();ultFirma=firma;
+  enviarRegistro(al,tot,casos,hojas);
+}
+async function enviarRegistro(al,tot,casos,hojas){
+  const ahora=new Date().toISOString(),ing=fechaIngreso();
+  if(await listo){
+    try{const ref=DB.doc("ranking_ccl/"+UID),s=await conTiempo(ref.get(),10000),p=s.exists?(s.data()||{}):{},pIng=p.ingreso||ing;
+      if(!s.exists||tot>(+p.puntos||0)||casos>(+p.casos||0)||hojas>(+p.hojas||0)||p.alias!==al||!p.ingreso){
+        await conTiempo(ref.set({alias:al,puntos:Math.max(tot,+p.puntos||0),casos:Math.max(casos,+p.casos||0),hojas:Math.max(hojas,+p.hojas||0),fecha:Date.now(),ingreso:pIng,ultima:ahora}),10000)}}catch(e){ultFirma=""}
+    return;
+  }
+  if(!REGISTRO_URL)return;
+  try{
+    await conTiempo(fetch(REGISTRO_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({id:miPid(),alias:al,puntos:tot,casos:casos,hojas:hojas,ingreso:ing,ultima:ahora})}),10000);
+  }catch(e){ultFirma=""}
+}
+function pintarRegistro(lista,esYo){
+  const n2=document.getElementById("rkn"),l2=document.getElementById("rkl");if(!n2||!l2)return;
+  const ord=[...lista].sort((a,b)=>(+b.puntos||0)-(+a.puntos||0)),totalPart=ord.length;
+  n2.textContent=totalPart===0?"0 participantes registrados. Entre a la sede o avance en un capítulo para aparecer.":(totalPart===1?"1 participante registrado":"Participantes registrados: "+totalPart)+" · Ordenado por puntos.";
+  l2.innerHTML="";
+  let yaYo=false;
+  ord.slice(0,50).forEach(x=>{
+    const li=document.createElement("li");
+    if(!yaYo&&esYo(x)){li.className="yo";yaYo=true}
+    const a=document.createElement("span");a.textContent=String(x.alias||"Anónimo").slice(0,40);
+    const b=document.createElement("b");b.textContent=(+x.puntos||0)+" pts · casos "+(+x.casos||0)+"/"+MIS.length+" · hojas "+(+x.hojas||0)+"/"+HOJAS.length;
+    li.append(a,b);l2.append(li);
+  });
+}
+async function verRanking(){
+  const n=document.getElementById("rkn");if(!n)return;
+  const t=setTimeout(()=>{const x=document.getElementById("rkn");if(x&&x.textContent.startsWith("Conectando"))x.textContent=sinRk()},10000);
+  if(await listo){
+    if(unsub)unsub();
+    unsub=DB.collection("ranking_ccl").orderBy("puntos","desc").limit(50).onSnapshot(q=>{clearTimeout(t);
+      const filas=q.docs.map(d=>Object.assign({id:d.id},d.data()||{}));
+      pintarRegistro(filas,x=>x.id===UID)},
+    ()=>{clearTimeout(t);const n2=document.getElementById("rkn");if(n2)n2.textContent=sinRk()});
+    return;
+  }
+  if(REGISTRO_URL){
+    try{
+      const r=await conTiempo(fetch(REGISTRO_URL+"?accion=lista",{cache:"no-store"}),10000);if(!r.ok)throw new Error("http "+r.status);
+      const datos=await conTiempo(r.json(),10000);
+      clearTimeout(t);
+      if(!Array.isArray(datos))throw new Error("Formato inválido");
+      const miAl=((S.look&&S.look.nombre)||leer("ccl_alias")||"").trim(),miIng=leer("ccl_ingreso")||"";
+      const hayIng=Boolean(miIng&&datos.some(x=>x&&String(x.ingreso||"")===miIng));
+      pintarRegistro(datos,x=>Boolean(x)&&(hayIng?String(x.ingreso||"")===miIng:(Boolean(miAl)&&String(x.alias||"")===miAl)));
+      return;
+    }catch(e){}
+  }
+  clearTimeout(t);const x=document.getElementById("rkn"),l2=document.getElementById("rkl");if(x)x.textContent=sinRk();if(l2)l2.innerHTML="";
+}
+function sinRk(){return "El registro compartido se activa en el enlace oficial del juego. Su total en este equipo: "+totalRk()+" pts."}
+
+HOJAS.forEach(h=>{if(!pisable(h.tile[0],h.tile[1])||Object.values(SALAS).some(s=>s.spot+""===h.tile+""||s.door+""===h.tile+""))console.warn("Hoja mal ubicada",h.a)});
+imgUE.onload=()=>{fondo=null;S.pintado=false};
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{fondo=null;S.pintado=false});
+portada();
+})();
+</script>
